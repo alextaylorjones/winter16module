@@ -92,7 +92,9 @@ function obstacles = get_obstacle_set(ob_config)
     if mod(ob_config,5) == 0
         obstacles(size(obstacles,1)+1,:,:) = [5,25;25,5;15,10;5,25;5,25;5,25;5,25;5,25;5,25];
     end
-    
+    if mod(ob_config,7) == 0
+        obstacles(size(obstacles,1)+1,:,:) = [15,5;20,10;20,20;15,25;10,25;5,20;5,15;10,10;15,15;15,20;10,20;10,17;13,14;10,12;7,15;10,23;15,23;18,18;18,10;15,5 ];
+    end
 end
 
 %Use sampling to detesrmine global cost
