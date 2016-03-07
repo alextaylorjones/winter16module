@@ -22,7 +22,7 @@ if nargin < 6
     agent_loc = zeros(4,num_iterations,num_agents,2);
 
     %Set control gain
-    control_gain = 0.1;
+    control_gain = 0.5;
 
     %Run lloyd style algorithm
     agent_loc(1,:,:,:) = loydsAlgorithm_nonuniform(num_iterations,show_plot,num_agents,obstacles,seed,control_gain);
@@ -51,6 +51,7 @@ cost_optimal  = get_cost_timeline(agent_loc(4,:,:,:),obstacles,NUM_SAMPLES);
 
 figure(2);
 plot(v,cost_lloyd,'o',v,cost_approx,'+',v, cost_combined,'x',v,cost_optimal,'^');
+legend('Lloyd','Discrete Apx.','Local Path','Annealing')
 title('Coverage Control Sampled (1000) Cost');
 xlabel('Iterations');
 ylabel('Cost');
@@ -66,6 +67,7 @@ cost_optimal  = get_cost_timeline(agent_loc(4,:,:,:),obstacles,NUM_SAMPLES);
 
 figure(3);
 plot(v,cost_lloyd,'o',v,cost_approx,'+',v, cost_combined,'x',v,cost_optimal,'^');
+legend('Lloyd','Discrete Apx.','Local Path','Annealing')
 title('Coverage Control Sampled (3000) Cost');
 xlabel('Iterations');
 ylabel('Cost');

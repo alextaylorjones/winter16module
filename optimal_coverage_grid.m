@@ -401,11 +401,6 @@ function a = triangle_area(P1,P2,P3)
 function f_x = performance(cx,cy,px,py)
 f_x = sqrt((cx-px) ^2 + (cy-py)^2);
 
-%Density function - Gaussian density around center points 
-function r = density(x,y)
-   %r = exp(-((x-1)*(x-1)) + -((y-5)*(y-5)));
-   r = exp( (-(x-5)*(x-5) + -(y-5)*(y-5)));
-
 function [V,C]=VoronoiBounded(x,y, crs)
 
 bnd=[min(x) max(x) min(y) max(y)]; %data bounds

@@ -175,10 +175,6 @@ function a = triangle_area(P1,P2,P3)
     a = sqrt(s*(s-e12)*(s-e23)*(s-e31));    
 
 
-%Simple gaussian density around center point (cx,cy)
-function r = density(x,y)
-	r = exp(-(x-5)*(x-5)-(y-5)*(y-5));
-
 
    
 function [Cx,Cy] = PolyCentroidNonuniformDensity(X,Y, obstacles)

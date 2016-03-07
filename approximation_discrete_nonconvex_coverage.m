@@ -472,9 +472,3 @@ while (exit_flag == 0)
     cx = mx;
     cy = my;
 end %end while
-    
-
-
-%A toy density function - Gaussian density around center point (cx,cy)
-function r = density(x,y)
-	r = exp(-(x-5)*(x-5)-(y-5)*(y-5));
