@@ -25,10 +25,10 @@ if nargin < 6
     control_gain = 0.5;
 
     %Run lloyd style algorithm
-    agent_loc(1,:,:,:) = loydsAlgorithm_nonuniform(num_iterations,show_plot,num_agents,obstacles,seed,control_gain);
+    %agent_loc(1,:,:,:) = loydsAlgorithm_nonuniform(num_iterations,show_plot,num_agents,obstacles,seed,control_gain);
 
     %Run approximation via search based grid algorithm
-    agent_loc(2,:,:,:) = approximation_discrete_nonconvex_coverage(num_iterations,show_plot,num_agents,obstacles,seed);
+    %agent_loc(2,:,:,:) = approximation_discrete_nonconvex_coverage(num_iterations,show_plot,num_agents,obstacles,seed);
 
     %Run combined tangentbug and lloyd
     loop_gain = 3;
@@ -37,6 +37,13 @@ if nargin < 6
 
     %Run optimal annealing, algorithm
     %agent_loc(4,:,:,:) = optimal_coverage_grid(num_iterations,show_plot,num_agents,obstacles,seed);
+    
+    %Run non adaptive ladybug algorithm
+    control_gain_lb = 0.5;
+    exploration_gain = 0.3;
+    agent_loc(5,:,:,:) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lb, exploration_gain);
+    
+    
 end
 
 %Plot cost functions
@@ -47,11 +54,12 @@ cost_lloyd  = get_cost_timeline(agent_loc(1,:,:,:),obstacles,NUM_SAMPLES);
 cost_approx  = get_cost_timeline(agent_loc(2,:,:,:),obstacles,NUM_SAMPLES);
 cost_combined = get_cost_timeline(agent_loc(3,:,:,:),obstacles,NUM_SAMPLES);
 cost_optimal  = get_cost_timeline(agent_loc(4,:,:,:),obstacles,NUM_SAMPLES);
+cost_ladybug  = get_cost_timeline(agent_loc(5,:,:,:),obstacles,NUM_SAMPLES);
 
 
 figure(2);
-plot(v,cost_lloyd,'o',v,cost_approx,'+',v, cost_combined,'x',v,cost_optimal,'^');
-legend('Lloyd','Discrete Apx.','Local Path','Annealing')
+plot(v,cost_lloyd,'o',v,cost_approx,'+',v, cost_combined,'x',v,cost_optimal,'^',v,cost_ladybug,'s');
+legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
 title('Coverage Control Sampled (1000) Cost');
 xlabel('Iterations');
 ylabel('Cost');
@@ -63,11 +71,13 @@ cost_lloyd = get_cost_timeline(agent_loc(1,:,:,:),obstacles,NUM_SAMPLES);
 cost_approx = get_cost_timeline(agent_loc(2,:,:,:),obstacles,NUM_SAMPLES);
 cost_combined = get_cost_timeline(agent_loc(3,:,:,:),obstacles,NUM_SAMPLES);
 cost_optimal  = get_cost_timeline(agent_loc(4,:,:,:),obstacles,NUM_SAMPLES);
+cost_ladybug  = get_cost_timeline(agent_loc(5,:,:,:),obstacles,NUM_SAMPLES);
+
 
 
 figure(3);
-plot(v,cost_lloyd,'o',v,cost_approx,'+',v, cost_combined,'x',v,cost_optimal,'^');
-legend('Lloyd','Discrete Apx.','Local Path','Annealing')
+plot(v,cost_lloyd,'o',v,cost_approx,'+',v, cost_combined,'x',v,cost_optimal,'^',v,cost_ladybug,'s');
+legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
 title('Coverage Control Sampled (3000) Cost');
 xlabel('Iterations');
 ylabel('Cost');
@@ -144,8 +154,4 @@ function cost_vec = get_cost_timeline(agent_locations,obstacles, NUM_SAMPLES)
     
     cost_vec = cost_vec ./ NUM_SAMPLES;
 
-end
-
-function r = density(x,y)
-	r = exp(-(x-5)*(x-5)-(y-5)*(y-5));
 end
