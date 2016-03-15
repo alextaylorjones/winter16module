@@ -15,6 +15,13 @@ obstacles = get_obstacle_set(obstacle_configuration);
 %For now show plots of algorithm runs
 show_plot = true;
 
+%setup density function
+global density_params ;
+global density_type;
+density_type = density_function_type;
+density_params = density_function_params;
+
+
 %If agent_loc is not passed as argument
 if nargin < 6
     
@@ -24,11 +31,14 @@ if nargin < 6
     %Set control gain
     control_gain = 0.5;
 
-    %Run lloyd style algorithm
-    %agent_loc(1,:,:,:) = loydsAlgorithm_nonuniform(num_iterations,show_plot,num_agents,obstacles,seed,control_gain);
+    %Run lloyd style algorithm (use degenerate
+    %non_adaptive_ladybug_coverage
+    % agent_loc(1,:,:,:) = loydsAlgorithm_nonuniform(num_iterations,show_plot,num_agents,obstacles,seed,control_gain,0);
+
+    agent_loc(1,:,:,:) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain,0);
 
     %Run approximation via search based grid algorithm
-    %agent_loc(2,:,:,:) = approximation_discrete_nonconvex_coverage(num_iterations,show_plot,num_agents,obstacles,seed);
+    agent_loc(2,:,:,:) = approximation_discrete_nonconvex_coverage(num_iterations,show_plot,num_agents,obstacles,seed);
 
     %Run combined tangentbug and lloyd
     loop_gain = 3;
@@ -65,7 +75,7 @@ xlabel('Iterations');
 ylabel('Cost');
 
 
-NUM_SAMPLES = 3000;
+NUM_SAMPLES = 5000;
 
 cost_lloyd = get_cost_timeline(agent_loc(1,:,:,:),obstacles,NUM_SAMPLES);
 cost_approx = get_cost_timeline(agent_loc(2,:,:,:),obstacles,NUM_SAMPLES);
@@ -78,9 +88,24 @@ cost_ladybug  = get_cost_timeline(agent_loc(5,:,:,:),obstacles,NUM_SAMPLES);
 figure(3);
 plot(v,cost_lloyd,'o',v,cost_approx,'+',v, cost_combined,'x',v,cost_optimal,'^',v,cost_ladybug,'s');
 legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
-title('Coverage Control Sampled (3000) Cost');
+title('Coverage Control Sampled (5000) Cost');
 xlabel('Iterations');
 ylabel('Cost');
+
+disp_lloyd = get_displacement_vec(agent_loc(1,:,:,:));
+disp_approx = get_displacement_vec(agent_loc(2,:,:,:));
+disp_combined = get_displacement_vec(agent_loc(3,:,:,:));
+disp_optimal = get_displacement_vec(agent_loc(4,:,:,:));
+disp_ladybug = get_displacement_vec(agent_loc(5,:,:,:));
+
+
+figure(4);
+plot(v,disp_lloyd,'o',v,disp_approx,'+',v, disp_combined,'x',v,disp_optimal,'^',v,disp_ladybug,'s');
+legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
+title('Coverage Control Displacement');
+xlabel('Iterations');
+ylabel('Total Displacement');
+
 
 end
 
@@ -122,11 +147,13 @@ function cost_vec = get_cost_timeline(agent_locations,obstacles, NUM_SAMPLES)
 	sample_points(:,1) = rand(NUM_SAMPLES,1)*xrange;
 	sample_points(:,2) = rand(NUM_SAMPLES,1)*yrange;
 	sample_points(:,3) = zeros(NUM_SAMPLES,1);
+    used_samples = NUM_SAMPLES;
 	for i =1:NUM_SAMPLES
 		for ob = 1:size(obstacles,1)
 
 			if inpolygon(sample_points(i,1), sample_points(i,2),obstacles(ob,:,1),obstacles(ob,:,2))
 				sample_points(i,3) = -1;
+                used_samples = used_samples - 1;
 				break;
 			end
 		end
@@ -152,6 +179,21 @@ function cost_vec = get_cost_timeline(agent_locations,obstacles, NUM_SAMPLES)
         end
     end
     
-    cost_vec = cost_vec ./ NUM_SAMPLES;
+    cost_vec = cost_vec ./ used_samples;
 
 end
+
+function movement_vec = get_displacement_vec(agent_locations)
+    %start at second position and calc distance moved
+    movement_vec = zeros(size(agent_locations,2),1);
+
+    for counter =2:size(agent_locations,2)
+        %
+        movement_vec(counter,1) = movement_vec(counter-1,1);
+        for agent_num=1:size(agent_locations,3) %num agents
+            %Add euc distance moved
+            movement_vec(counter,1) = movement_vec(counter,1) + sqrt(sum((agent_locations(1,counter,agent_num,1:2) - agent_locations(1,counter-1,agent_num,1:2)).^ 2 ));
+        end
+    end
+end
+

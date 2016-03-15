@@ -254,29 +254,33 @@ function [Cx,Cy] = PolyCentroidNonuniformDensity(X,Y, obstacles)
     j = 1;
     numerator_vec_sum = [0 0];
     denominator_sum = 0;
+    sample_counter = 0;
     DENSITY = zeros(current_sample,1);
     while j < current_sample
         
         %Check to see if random sample is in obstacle
         sample_in_obs_flag = 0;
-%         for ob =1:size(obstacles)
-%             if inpolygon(random_points(j,1),random_points(j,2),obstacles(ob,:,1), obstacles(ob,:,2))
-%                 sample_in_obs_flag = 1;
-%                 random_points(j,:) = [0 0];
-%                 break;
-%             end
-%         end
-%         if (sample_in_obs_flag == 1)
-%             j = j + 1;
-%             continue;
-%         end
+        for ob =1:size(obstacles)
+            if inpolygon(random_points(j,1),random_points(j,2),obstacles(ob,:,1), obstacles(ob,:,2))
+                sample_in_obs_flag = 1; 
+                
+                break;
+            end
+        end
+        if (sample_in_obs_flag == 1)
+            sample_in_obs_flag = 0;
+            j = j + 1;
+            continue;
+        end
+        sample_counter = sample_counter+1;
         DENSITY(j,1) = density(random_points(j,1),random_points(j,2));
         numerator_vec_sum = numerator_vec_sum + random_points(j,:)*DENSITY(j,1);
         denominator_sum = denominator_sum + DENSITY(j,1);
 
         j = j + 1;
     end
-   
+    %Print actual used samples
+    sample_counter
     
 
         
