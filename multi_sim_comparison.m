@@ -214,6 +214,7 @@ function kEnergy_vec = get_kEnergy_timeline(agent_locations)
     end
 end
 
+
 function movement_vec = get_displacement_vec(agent_locations)
     %start at second position and calc distance moved
     movement_vec = zeros(size(agent_locations,2),1);
