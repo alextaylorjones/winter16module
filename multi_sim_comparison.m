@@ -7,13 +7,13 @@
 function agent_loc = multi_sim_comparison(obstacle_configuration, density_function_type,density_function_params, num_agents,num_iterations, agent_loc)
 
 %random seed
-seed = 16;
+seed = 20;
 
 %Setup obstacles
 obstacles = get_obstacle_set(obstacle_configuration);
 
 %For now show plots of algorithm runs
-show_plot = true;
+show_plot = false;
 
 %setup density function
 global density_params ;

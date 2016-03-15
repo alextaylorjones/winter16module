@@ -1,4 +1,4 @@
-function agent_locations = Non_adaptive_ladybug_coverage(numIterations,showPlot,num_agents,obstacles,seed,control_gain, exploration_gain)
+function agent_locations = Non_adaptive_ladybug_coverage(numIterations,showPlot,num_agents,obstacles,seed,control_gain,exploration_gain)
 
 close all
 K_prop = control_gain;
@@ -106,9 +106,16 @@ for counter = 1:numIterations
                 goal_x = Px(i) + u(1);
                 goal_y = Py(i) + u(2);
                 
-            
+
+                    
+                
                 obstacle_entered = [];
+                in_obstacle = 0;
                 for ob =1:size(obstacles,1)
+                    if (inpolygon(Px(i),Py(i),obstacles(ob,:,1),obstacles(ob,:,2)))
+                        in_obstacle = 1;
+                        break;
+                    end
                     for edge =1:size(obstacles,2)
                         vstart = obstacles(ob,edge,1:2);
                         if edge == size(obstacles,2)
@@ -119,6 +126,7 @@ for counter = 1:numIterations
                         %Find the intersection point along trajectory of
                         %agent i to its destination
                         [int_x int_y] = polyxpoly([Px(i) goal_x],[Py(i) goal_y],[vstart(1) vend(1)],[vstart(2) vend(2)]);
+                        
                         if (~isempty(int_x) || ~isempty(int_y)) 
                             obstacle_entered(size(obstacle_entered,1)+1,1:4) = [ob,edge,int_x,int_y]; 
                         end
@@ -126,7 +134,10 @@ for counter = 1:numIterations
                     end
                 end
                 
-                if (isempty(obstacle_entered))
+                if in_obstacle == 1
+                    %don't update position
+                    
+                elseif (isempty(obstacle_entered))
                     %position error
                     Px(i) = goal_x;
                     Py(i) = goal_y; 
@@ -138,12 +149,14 @@ for counter = 1:numIterations
                     distance_vec = displacement_vec(:,1) .^2 + displacement_vec(:,2) .^ 2;
                     distance_min = (distance_vec == min(distance_vec));
                    
-                    min_entry = find(distance_min == 1)
+                    min_entry = find(distance_min == 1);
                     
                     %Rescale movement so as to not enter obstacle
+                    
                     Px(i) = obstacle_entered(min_entry,3);
                     Py(i) = obstacle_entered(min_entry,4);
-                   
+    
+                    
                 end
 
                 
@@ -151,6 +164,7 @@ for counter = 1:numIterations
         
         end
     end
+    
     %Store agent locations
 	agent_locations(counter,:,1) = Px;
 	agent_locations(counter,:,2) = Py;
@@ -166,16 +180,10 @@ for counter = 1:numIterations
         axis equal
         axis([0,xrange,0,yrange]);
         drawnow
-%         if mod(counter,50) ==0
-%             pause
-%             %pause(0.1)
-%         end
+
     end
     
 end
-
-
-
 
 function a = triangle_area(P1,P2,P3)
     e12 = sqrt(sum((P1-P2) .^ 2));
@@ -279,8 +287,8 @@ function [Cx,Cy] = PolyCentroidNonuniformDensity(X,Y, obstacles)
 
         j = j + 1;
     end
-    %Print actual used samples
-    sample_counter
+    %Print actual used samples DEBUG
+    %sample_counter
     
 
         
