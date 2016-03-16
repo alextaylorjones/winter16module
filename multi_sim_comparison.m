@@ -13,7 +13,7 @@ seed = 20;
 obstacles = get_obstacle_set(obstacle_configuration);
 
 %For now show plots of algorithm runs
-show_plot = false;
+show_plot = true;
 
 %setup density function
 global density_params ;
