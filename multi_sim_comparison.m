@@ -204,7 +204,45 @@ function obstacles = get_obstacle_set()
       obstacles(size(obstacles,1)+1,:,:) = [spiral;spiral_ccw];
         
     end
-    
+%     if mod(ob_config,17)==0
+%         obstacles(size(obstacles,1)+1,:,:) = 0.3*[60,0; 60,35; 30,35; 30,45; 70,45; 70,0; 60,0];
+%         obstacles(size(obstacles,1)+1,:,:) = 0.3*[60,100; 60,65; 30,65; 30,55; 70,55; 70,100; 60,100];
+%         obstacles(size(obstacles,1)+1,:,:) = 0.3*[0,65; 20,65; 20,55; 0,55; 0,65;0,65;0,65 ];
+%         obstacles(size(obstacles,1)+1,:,:) = 0.3*[0,45; 20,45; 20,35; 0,35; 0,45;0,65;0,65];
+%     end
+%     if mod(ob_config,19)==0
+%         for i=0:2
+%             for j=0:2
+%                 obstacles(size(obstacles,1)+1,:,:) = [4+8*i,4+8*j; 10+8*i,4+8*j; 10+8*i,10+8*j; 4+8*i,10+8*j; 4+8*i,4+8*j];
+%             end
+%         end
+%     end
+%     
+%     if mod(ob_config,23)==0
+%         obstacles(size(obstacles,1)+1,:,:) = [17.5,5; 25,7.5; 20,12.5; 17.5,12; 12,17.5; 12.5,20; 7.5,25; 5,20; 17.5,5];
+%     end
+%     if mod(ob_config,29)==0
+%         x=[];
+%         y=[];
+%         cx=[];
+%         cy=[];
+%         obstacles(size(obstacles,1)+1,:,:)=[]
+% %         x(size(x,1)+1,:) = round(rand(1)*30)/4;
+% %         y(size(x,1)+1,:) = round(rand(1)*30)/4;
+% %         cx(size(x,1)+1,:) = round(rand(1)*30);
+% %         cy(size(x,1)+1,:) = round(rand(1)*30);
+% %         obstacles(size(obstacles,1)+1,:,:) = [cx-x,cy-y; cx+x,cy-y; cx+x,cy+y; cx-x,cy+y];
+%         
+%         for i=1:5%round(rand(1)*30)/4
+%             x(i) = round(rand(1)*30)/4;
+%             y(i) = round(rand(1)*30)/4;
+%             cx(i) =round(rand(1)*30);
+%             cy(i) =round(rand(1)*30);
+% %             if ~(polybool('intersection', x(i+1), y(i), x(i-1), y(i-1)))
+%                  obstacles(size(obstacles,1)+1,:,:) = [cx(i)-x(i),cy(i)-y(i); cx(i)+x(i),cy(i)-y(i); cx(i)+x(i),cy(i)+y(i); cx(i)-x(i),cy(i)+y(i)];         
+% %             end
+%         end
+%     end
 end
 
 %Use sampling to detesrmine global cost
