@@ -4,7 +4,7 @@
 % test
 %num_agents - as described, integer input
 %num_iterations - number of iterations to compute for each simulation
-function agent_loc = multi_sim_comparison(obstacle_configuration, density_function_type,density_function_params, num_agents,num_iterations, agent_loc)
+function agent_loc = multi_sim_comparison(obstacle_configuration, density_function_type,density_function_params, num_agents,num_iterations)
 
 %random seed
 seed = 16;
@@ -144,9 +144,54 @@ function obstacles = get_obstacle_set(ob_config)
     if mod(ob_config,7) == 0
         obstacles(size(obstacles,1)+1,:,:) = [15,5;20,10;20,20;15,25;10,25;5,20;5,15;10,10;15,15;15,20;10,20;10,17;13,14;10,12;7,15;10,23;15,23;18,18;18,10;15,5 ];
     end
-    if mode(ob_config,11) == 0
+    if mod(ob_config,11) == 0
         %obstacles(size(obstacles,1)+1,:,:) = (0.034)*[0,0; 60,0; 60,35; 30,35; 30,45; 70,45; 70,5; 100,5; 70, 100; 70,55; 30, 55; 30, 65; 60,65; 60,95; 5,95; 5,65; 20,65; 20,55; 5,55; 5,45; 20,45; 20,35; 5,35; 0,0 ]
         obstacles(size(obstacles,1)+1,:,:) = 0.3*[0,0; 60,0; 60,35; 30,35; 30,45; 70,45; 70,5; 95,5; 70, 95; 70,55; 30, 55; 30, 65; 60,65; 60,95; 5,95; 5,65; 20,65; 20,55; 5,55; 5,45; 20,45; 20,35; 5,35; 0,0 ]
+    end
+    %simple spiral
+    if mod(ob_config,13) == 0
+      %number of spiral loops
+      loopcnt = 3;
+      xrange = 30;
+      yrange = 30;
+      dx = floor(xrange/(2*loopcnt));
+      dy = (yrange/(2*loopcnt - 1));
+      xleft = 0;
+      xright = xrange;
+      ydown =0;
+      yup = yrange;
+      spiral = [];
+        spiral(size(spiral,1)+1,1) = xleft + dx;
+        spiral(size(spiral,1),2) = ydown;
+        
+      for l =1:loopcnt-1
+
+
+        spiral(size(spiral,1)+1,1) = xleft + dx;
+        spiral(size(spiral,1),2) = yup-dy;
+
+        spiral(size(spiral,1)+1,1) = xright-dx;
+        spiral(size(spiral,1),2) = yup-dy;
+
+        spiral(size(spiral,1)+1,1) = xright-dx;
+        spiral(size(spiral,1),2) = ydown+dy;
+
+        spiral(size(spiral,1)+1,1) = xleft + 2*dx;
+        spiral(size(spiral,1),2) = ydown+dy;
+
+        xleft = xleft+dx;
+        xright= xright-dx;
+        yup = yup -dy;
+        ydown = ydown+dy;
+      end
+      spiral_ccw = (fliplr(spiral'))';
+      %offset
+      for i =1:size(spiral_ccw)
+        spiral_ccw(i,:) = spiral_ccw(i,:) + [dx/8,-dy/8];
+      end
+
+      obstacles(size(obstacles,1)+1,:,:) = [spiral;spiral_ccw];
+        
     end
     
 end
