@@ -4,129 +4,140 @@
 % test
 %num_agents - as described, integer input
 %num_iterations - number of iterations to compute for each simulation
-function agent_loc = multi_sim_comparison(obstacle_configuration, density_function_type,density_function_params, num_agents,num_iterations)
+%simulation type [string,param1,param2,...]
+   %1. metric-all : runs all algorithms on all algorithms 
+       %param 1 -control gain for lloyd
+       %param 2 - control gain for ladybug
+       %param 3 control gain for combined
+       %param 4- loop gain
+   % EXAMPLES
+   % multi_sim_comparison(obstacle_configuration, simulation_type, 'gaussian',density_function_params, 10,100)
+function agent_loc = multi_sim_comparison(obstacle_configuration, simulation_type, density_function_type,density_function_params, num_agents,num_iterations)
 
 %random seed
 seed = 16;
 
-%Setup obstacles
-obstacles = get_obstacle_set(obstacle_configuration);
-
 %For now show plots of algorithm runs
 show_plot = true;
 
-%setup density function
-global density_params ;
+%setup density function and obstacle global vars
+global density_params;
 global density_type;
+global obstacle_config;
 density_type = density_function_type;
 density_params = density_function_params;
+obstacle_config = obstacle_configuration;
 
+%Setup obstacles
+obstacles = get_obstacle_set();
 
-%If agent_loc is not passed as argument
-if nargin < 6
+%Split based on simulation type
+if (strcmp(simulation_type{1},'metric-all') == 1)
+    control_gain_lloyd = simulation_type{2};
+    control_gain_lb = simulation_type{3};
+    control_gain_combined = simulation_type{4};
+    loop_gain = simulation_type{5};
+    exploration_gain = simulation_type{6};
     
     %Run the 4 algorithms using params specified in function input
     agent_loc = zeros(4,num_iterations,num_agents,2);
 
-    %Set control gain
-    control_gain = 0.5;
 
     %Run lloyd style algorithm (use degenerate
     %non_adaptive_ladybug_coverage
     % agent_loc(1,:,:,:) = loydsAlgorithm_nonuniform(num_iterations,show_plot,num_agents,obstacles,seed,control_gain,0);
 
-    agent_loc(1,:,:,:) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain,0);
+    agent_loc(1,:,:,:) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lloyd,0);
 
     %Run approximation via search based grid algorithm
     agent_loc(2,:,:,:) = approximation_discrete_nonconvex_coverage(num_iterations,show_plot,num_agents,obstacles,seed);
 
     %Run combined tangentbug and lloyd
-    loop_gain = 3;
     max_step = 0.25;
-    %agent_loc(3,:,:,:) = combined(num_iterations,show_plot,num_agents,obstacles,seed,control_gain,loop_gain,max_step);
+    agent_loc(3,:,:,:) = combined(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_combined,loop_gain,max_step);
 
     %Run optimal annealing, algorithm
     %agent_loc(4,:,:,:) = optimal_coverage_grid(num_iterations,show_plot,num_agents,obstacles,seed);
-    
+
     %Run non adaptive ladybug algorithm
-    control_gain_lb = 0.5;
-    exploration_gain = 0.3;
+
     agent_loc(5,:,:,:) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lb, exploration_gain);
-    
-    
+    %Plot cost functions
+
+    v = 1:num_iterations;
+    NUM_SAMPLES = 1000;
+    cost_lloyd  = get_cost_timeline(agent_loc(1,:,:,:),obstacles,NUM_SAMPLES);
+    cost_approx  = get_cost_timeline(agent_loc(2,:,:,:),obstacles,NUM_SAMPLES);
+    cost_combined = get_cost_timeline(agent_loc(3,:,:,:),obstacles,NUM_SAMPLES);
+    cost_optimal  = get_cost_timeline(agent_loc(4,:,:,:),obstacles,NUM_SAMPLES);
+    cost_ladybug  = get_cost_timeline(agent_loc(5,:,:,:),obstacles,NUM_SAMPLES);
+
+    NUM_SAMPLES = 1000;
+    kEnergy_lloyd  = get_kEnergy_timeline(agent_loc(1,:,:,:));
+    kEnergy_approx  = get_kEnergy_timeline(agent_loc(2,:,:,:));
+    kEnergy_combined = get_kEnergy_timeline(agent_loc(3,:,:,:));
+    kEnergy_optimal  = get_kEnergy_timeline(agent_loc(4,:,:,:));
+    kEnergy_ladybug  = get_kEnergy_timeline(agent_loc(5,:,:,:));
+
+
+    figure(2);
+    plot(v,cost_lloyd,'o',v,cost_approx,'+',v, cost_combined,'x',v,cost_optimal,'^',v,cost_ladybug,'s');
+    legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
+    title('Coverage Control Sampled (1000) Cost');
+    xlabel('Iterations');
+    ylabel('Cost');
+
+
+    NUM_SAMPLES = 5000;
+
+    cost_lloyd = get_cost_timeline(agent_loc(1,:,:,:),obstacles,NUM_SAMPLES);
+    cost_approx = get_cost_timeline(agent_loc(2,:,:,:),obstacles,NUM_SAMPLES);
+    cost_combined = get_cost_timeline(agent_loc(3,:,:,:),obstacles,NUM_SAMPLES);
+    cost_optimal  = get_cost_timeline(agent_loc(4,:,:,:),obstacles,NUM_SAMPLES);
+    cost_ladybug  = get_cost_timeline(agent_loc(5,:,:,:),obstacles,NUM_SAMPLES);
+
+
+
+    figure(3);
+    plot(v,cost_lloyd,'o',v,cost_approx,'+',v, cost_combined,'x',v,cost_optimal,'^',v,cost_ladybug,'s');
+    legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
+    title('Coverage Control Sampled (5000) Cost');
+    xlabel('Iterations');
+    ylabel('Cost');
+
+    disp_lloyd = get_displacement_vec(agent_loc(1,:,:,:));
+    disp_approx = get_displacement_vec(agent_loc(2,:,:,:));
+    disp_combined = get_displacement_vec(agent_loc(3,:,:,:));
+    disp_optimal = get_displacement_vec(agent_loc(4,:,:,:));
+    disp_ladybug = get_displacement_vec(agent_loc(5,:,:,:));
+
+
+    figure(4);
+    plot(v,disp_lloyd,'o',v,disp_approx,'+',v, disp_combined,'x',v,disp_optimal,'^',v,disp_ladybug,'s');
+    legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
+    title('Coverage Control Displacement');
+    xlabel('Iterations');
+    ylabel('Total Displacement');
+
+    figure(5);
+    plot(v,kEnergy_lloyd,'o',v,kEnergy_approx,'+',v, kEnergy_combined,'x',v,kEnergy_optimal,'^',v,kEnergy_ladybug,'s');
+    legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
+    title('Coverage Control Sampled (1000) Kinetic Energy');
+    xlabel('Iterations');
+    ylabel('Kinetic Energy');
+
 end
 
-%Plot cost functions
-
-v = 1:num_iterations;
-NUM_SAMPLES = 1000;
-cost_lloyd  = get_cost_timeline(agent_loc(1,:,:,:),obstacles,NUM_SAMPLES);
-cost_approx  = get_cost_timeline(agent_loc(2,:,:,:),obstacles,NUM_SAMPLES);
-cost_combined = get_cost_timeline(agent_loc(3,:,:,:),obstacles,NUM_SAMPLES);
-cost_optimal  = get_cost_timeline(agent_loc(4,:,:,:),obstacles,NUM_SAMPLES);
-cost_ladybug  = get_cost_timeline(agent_loc(5,:,:,:),obstacles,NUM_SAMPLES);
-
-NUM_SAMPLES = 1000;
-kEnergy_lloyd  = get_kEnergy_timeline(agent_loc(1,:,:,:));
-kEnergy_approx  = get_kEnergy_timeline(agent_loc(2,:,:,:));
-kEnergy_combined = get_kEnergy_timeline(agent_loc(3,:,:,:));
-kEnergy_optimal  = get_kEnergy_timeline(agent_loc(4,:,:,:));
-kEnergy_ladybug  = get_kEnergy_timeline(agent_loc(5,:,:,:));
-
-
-figure(2);
-plot(v,cost_lloyd,'o',v,cost_approx,'+',v, cost_combined,'x',v,cost_optimal,'^',v,cost_ladybug,'s');
-legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
-title('Coverage Control Sampled (1000) Cost');
-xlabel('Iterations');
-ylabel('Cost');
-
-
-NUM_SAMPLES = 5000;
-
-cost_lloyd = get_cost_timeline(agent_loc(1,:,:,:),obstacles,NUM_SAMPLES);
-cost_approx = get_cost_timeline(agent_loc(2,:,:,:),obstacles,NUM_SAMPLES);
-cost_combined = get_cost_timeline(agent_loc(3,:,:,:),obstacles,NUM_SAMPLES);
-cost_optimal  = get_cost_timeline(agent_loc(4,:,:,:),obstacles,NUM_SAMPLES);
-cost_ladybug  = get_cost_timeline(agent_loc(5,:,:,:),obstacles,NUM_SAMPLES);
-
-
-
-figure(3);
-plot(v,cost_lloyd,'o',v,cost_approx,'+',v, cost_combined,'x',v,cost_optimal,'^',v,cost_ladybug,'s');
-legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
-title('Coverage Control Sampled (5000) Cost');
-xlabel('Iterations');
-ylabel('Cost');
-
-disp_lloyd = get_displacement_vec(agent_loc(1,:,:,:));
-disp_approx = get_displacement_vec(agent_loc(2,:,:,:));
-disp_combined = get_displacement_vec(agent_loc(3,:,:,:));
-disp_optimal = get_displacement_vec(agent_loc(4,:,:,:));
-disp_ladybug = get_displacement_vec(agent_loc(5,:,:,:));
-
-
-figure(4);
-plot(v,disp_lloyd,'o',v,disp_approx,'+',v, disp_combined,'x',v,disp_optimal,'^',v,disp_ladybug,'s');
-legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
-title('Coverage Control Displacement');
-xlabel('Iterations');
-ylabel('Total Displacement');
-
-figure(5);
-plot(v,kEnergy_lloyd,'o',v,kEnergy_approx,'+',v, kEnergy_combined,'x',v,kEnergy_optimal,'^',v,kEnergy_ladybug,'s');
-legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
-title('Coverage Control Sampled (1000) Kinetic Energy');
-xlabel('Iterations');
-ylabel('Kinetic Energy');
 end
 
 %Add an elseif clause to add new obstacles
 %Format of obstacles are M x N x N, whre M is number of obstacles, N is
 %vertices of obstacles.
 %We assume boundary is 30x30
-function obstacles = get_obstacle_set(ob_config)
+function obstacles = get_obstacle_set()
     obstacles = [];
+    global obstacle_config;
+    ob_config = obstacle_config;
     if (ob_config == 1)
         obstacles = [];
     end
@@ -135,8 +146,8 @@ function obstacles = get_obstacle_set(ob_config)
         obstacles(size(obstacles,1)+1,:,:) = [0,0;10,0;10,10;2,7;7,4;0,0];
     end
     if mod(ob_config,3) == 0
-        % 
-          obstacles(size(obstacles,1)+1,:,:) = [0,0;20,0;20,10;3,10;3,6;7,6;7,4;3,4;0,0];
+
+    obstacles(size(obstacles,1)+1,:,:) = [0,0;20,0;20,10;3,10;3,6;7,6;7,4;3,4;0,0];
     end
     if mod(ob_config,5) == 0
         obstacles(size(obstacles,1)+1,:,:) = [5,25;25,5;15,10;5,25;5,25;5,25;5,25;5,25;5,25];

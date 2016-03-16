@@ -104,8 +104,10 @@ for counter = 1:numIterations
         cy = min(yrange,max(0, cy));
         
         if ~isnan(cx) && inpolygon(cx,cy,crs(:,1),crs(:,2))
-                Vx(i) = Vx(i) + -K_prop*(Vx(i) - cx);
-                Vy(i) = Vy(i) + -K_prop*(Vy(i) - cy);
+            
+                %Reduce by Loop gain
+                Vx(i) = Vx(i) + -(1-exp(-loop_gain))*K_prop*(Vx(i) - cx);
+                Vy(i) = Vy(i) + -(1-exp(-loop_gain))*K_prop*(Vy(i) - cy);
                 
         end
         
