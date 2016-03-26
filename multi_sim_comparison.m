@@ -1,4 +1,4 @@
-%obstacle configuration - numerical id for obstacle configurations described in get_obstacle_set
+t%obstacle configuration - numerical id for obstacle configurations described in get_obstacle_set
 % density_function_type - UNIMPLEMENTED
 %density_function_params - UNIMPLEMENTED
 % test
@@ -32,6 +32,20 @@ obstacle_config = obstacle_configuration;
 obstacles = get_obstacle_set();
 
 %Split based on simulation type
+if strcmp(simulation_type{1},'param-vary') == 1
+    sz = size(simulation_type);
+    for i=2:sz[2]
+       algorithm_name = simulation_type{i};
+       if strcmp(algorithm_name,'lloyd')== 1
+           
+           for control_gain=0.05:0.05:0.8
+                Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lloyd,0,startingLoc);
+           end
+       end
+    end
+    
+    
+end
 if (strcmp(simulation_type{1},'metric-all') == 1)
     control_gain_lloyd = simulation_type{2};
     control_gain_lb = simulation_type{3};
