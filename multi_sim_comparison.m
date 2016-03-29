@@ -21,7 +21,7 @@
 function agent_loc = multi_sim_comparison(obstacle_configuration, simulation_type, density_function_type,density_function_params, num_agents, num_iterations, startingLoc)
 
 %Num samples runs of each algorithm
-num_trials = 1;
+num_trials = 2;
 
 %random seed
 seed = 19;
@@ -43,14 +43,17 @@ obstacles = get_obstacle_set();
 %Split based on simulation type
 if strcmp(simulation_type{1},'param-vary') == 1
     sz = size(simulation_type);
-    for i=2:sz[2]
+    for i=2:sz(2)
        algorithm_name = simulation_type{i};
        if strcmp(algorithm_name,'lloyd')== 1
            
            for control_gain=0.05:0.05:0.8
                 Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lloyd,0,startingLoc);
            end
+         
        end
+       
+       
     end
     
     
@@ -92,51 +95,48 @@ if (strcmp(simulation_type{1},'metric-all') == 1)
         %Plot metric results
     close all;
     v = 1:num_iterations;
-    for trial=1:num_trials
-      %print('computing stats on trial');
-      trial
-      NUM_SAMPLES = 5000;
-      cost_lloyd  = get_cost_timeline(agent_loc(trial,1,:,:,:),obstacles,NUM_SAMPLES);
-      cost_approx  = get_cost_timeline(agent_loc(trial,2,:,:,:),obstacles,NUM_SAMPLES);
-      cost_combined = get_cost_timeline(agent_loc(trial,3,:,:,:),obstacles,NUM_SAMPLES);
-      cost_optimal  = get_cost_timeline(agent_loc(trial,4,:,:,:),obstacles,NUM_SAMPLES);
-      cost_ladybug  = get_cost_timeline(agent_loc(trial,5,:,:,:),obstacles,NUM_SAMPLES);
 
-      figure(1);
-      plot(v,cost_lloyd,'o',v,cost_approx,'+',v, cost_combined,'x',v,cost_optimal,'^',v,cost_ladybug,'s');
-      legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
-      title('Coverage Control Sampled (5000) Cost');
-      xlabel('Iterations');
-      ylabel('Cost');
+    NUM_SAMPLES = 5000;
+    cost_lloyd  = get_cost_timeline(agent_loc(:,1,:,:,:),obstacles,NUM_SAMPLES);
+    cost_approx  = get_cost_timeline(agent_loc(:,2,:,:,:),obstacles,NUM_SAMPLES);
+    cost_combined = get_cost_timeline(agent_loc(:,3,:,:,:),obstacles,NUM_SAMPLES);
+    cost_optimal  = get_cost_timeline(agent_loc(:,4,:,:,:),obstacles,NUM_SAMPLES);
+    cost_ladybug  = get_cost_timeline(agent_loc(:,5,:,:,:),obstacles,NUM_SAMPLES);
 
-      disp_lloyd = get_displacement_vec(agent_loc(trial,1,:,:,:));
-      disp_approx = get_displacement_vec(agent_loc(trial,2,:,:,:));
-      disp_combined = get_displacement_vec(agent_loc(trial,3,:,:,:));
-      disp_optimal = get_displacement_vec(agent_loc(trial,4,:,:,:));
-      disp_ladybug = get_displacement_vec(agent_loc(trial,5,:,:,:));
+    figure(1);
+    plot(v,cost_lloyd,'o',v,cost_approx,'+',v, cost_combined,'x',v,cost_optimal,'^',v,cost_ladybug,'s');
+    legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
+    title('Coverage Control Sampled (5000) Cost');
+    xlabel('Iterations');
+    ylabel('Cost');
+
+    disp_lloyd = get_displacement_vec(agent_loc(:,1,:,:,:));
+    disp_approx = get_displacement_vec(agent_loc(:,2,:,:,:));
+    disp_combined = get_displacement_vec(agent_loc(:,3,:,:,:));
+    disp_optimal = get_displacement_vec(agent_loc(:,4,:,:,:));
+    disp_ladybug = get_displacement_vec(agent_loc(:,5,:,:,:));
 
 
-      figure(2);
-      plot(v,disp_lloyd,'o',v,disp_approx,'+',v, disp_combined,'x',v,disp_optimal,'^',v,disp_ladybug,'s');
-      legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
-      title('Coverage Control Displacement');
-      xlabel('Iterations');
-      ylabel('Total Displacement');
+    figure(2);
+    plot(v,disp_lloyd,'o',v,disp_approx,'+',v, disp_combined,'x',v,disp_optimal,'^',v,disp_ladybug,'s');
+    legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
+    title('Coverage Control Displacement');
+    xlabel('Iterations');
+    ylabel('Total Displacement');
 
-      kEnergy_lloyd  = get_kEnergy_timeline(agent_loc(trial,1,:,:,:));
-      kEnergy_approx  = get_kEnergy_timeline(agent_loc(trial,2,:,:,:));
-      kEnergy_combined = get_kEnergy_timeline(agent_loc(trial,3,:,:,:));
-      kEnergy_optimal  = get_kEnergy_timeline(agent_loc(trial,4,:,:,:));
-      kEnergy_ladybug  = get_kEnergy_timeline(agent_loc(trial,5,:,:,:));
+    kEnergy_lloyd  = get_kEnergy_timeline(agent_loc(:,1,:,:,:));
+    kEnergy_approx  = get_kEnergy_timeline(agent_loc(:,2,:,:,:));
+    kEnergy_combined = get_kEnergy_timeline(agent_loc(:,3,:,:,:));
+    kEnergy_optimal  = get_kEnergy_timeline(agent_loc(:,4,:,:,:));
+    kEnergy_ladybug  = get_kEnergy_timeline(agent_loc(:,5,:,:,:));
 
 
-      figure(3);
-      plot(v,kEnergy_lloyd,'o',v,kEnergy_approx,'+',v, kEnergy_combined,'x',v,kEnergy_optimal,'^',v,kEnergy_ladybug,'s');
-      legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
-      title('Coverage Control Sampled (1000) Kinetic Energy');
-      xlabel('Iterations');
-      ylabel('Kinetic Energy');
-    end
+    figure(3);
+    plot(v,kEnergy_lloyd,'o',v,kEnergy_approx,'+',v, kEnergy_combined,'x',v,kEnergy_optimal,'^',v,kEnergy_ladybug,'s');
+    legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
+    title('Coverage Control Sampled (1000) Kinetic Energy');
+    xlabel('Iterations');
+    ylabel('Kinetic Energy');
 
 end
 
@@ -282,58 +282,69 @@ function cost_vec = get_cost_timeline(agent_locations,obstacles, NUM_SAMPLES)
 		end
 	end
 
-	cost_vec = zeros(size(agent_locations,3),1);%num iterations
-	for counter =1:size(agent_locations,3)%num iterations
-        for i=1:NUM_SAMPLES
-            if (sample_points(i,3) == 0)
-            min_dist = Inf;
-            min_agent = -1;
-                for ag = 1:size(agent_locations,4) %num agents
-                    dist = sqrt(sum( ([agent_locations(1,1,counter,ag,1), agent_locations(1,1,counter,ag,2)] - sample_points(i,1:2)) .^ 2));% * density(sample_points(i,1:2));
-                    if dist < min_dist
-                        min_agent = ag;
-                        min_dist = dist;
-                    end
-                end
-                assert(min_agent ~= -1);
-                
-                cost_vec(counter,1) = cost_vec(counter,1) + min_dist * density(sample_points(i,1),sample_points(i,2));
-            end
-        end
-    end
-    
-    cost_vec = cost_vec ./ used_samples;
+  %num trials, repeat and average cost
+  cost_vec = zeros(size(agent_locations,3),size(agent_locations,1));%num iterations
+  for trial = 1:size(agent_locations,1)
 
+    for counter =1:size(agent_locations,3)%num iterations
+          for i=1:NUM_SAMPLES
+              if (sample_points(i,3) == 0)
+              min_dist = Inf;
+              min_agent = -1;
+                  for ag = 1:size(agent_locations,4) %num agents
+                      dist = sqrt(sum( ([agent_locations(trial,1,counter,ag,1), agent_locations(trial,1,counter,ag,2)] - sample_points(i,1:2)) .^ 2));% * density(sample_points(i,1:2));
+                      if dist < min_dist
+                          min_agent = ag;
+                          min_dist = dist;
+                      end
+                  end
+                  assert(min_agent ~= -1);
+                  
+                  cost_vec(counter,trial) = cost_vec(counter,trial) + min_dist * density(sample_points(i,1),sample_points(i,2));
+              end
+          end
+      end
+      
+     
+  end
+    cost_vec = sum(cost_vec,2) ./ (used_samples * size(agent_locations,1));
 end
 
 function kEnergy_vec = get_kEnergy_timeline(agent_locations)
     %start at second position and calc distance moved
-    kEnergy_vec = zeros(size(agent_locations,3),1);%num iterations
+    kEnergy_vec = zeros(size(agent_locations,3),size(agent_locations,1));% num iterations x num_trials
 
-    for counter =2:size(agent_locations,3)
-        %
-        kEnergy_vec(counter,1) = kEnergy_vec(counter-1,1);
-        for agent_num=1:size(agent_locations,4) %num agents
-            %Add euc distance moved
-            kEnergy_vec(counter,1) = kEnergy_vec(counter,1) + sum((agent_locations(1,1,counter,agent_num,1:2) - agent_locations(1,1,counter-1,agent_num,1:2)).^ 2 );
-        end
-    end
+    for trial=1:size(agent_locations,1)
+      for counter =2:size(agent_locations,3)%num iterations
+          kEnergy_vec(counter,trial) = kEnergy_vec(counter-1,trial);
+          for agent_num=1:size(agent_locations,4) %num agents
+              %Add euc distance moved ^2
+              diff = agent_locations(trial,1,counter,agent_num,1:2) - agent_locations(trial,1,counter-1,agent_num,1:2);
+              kEnergy_vec(counter,trial) = kEnergy_vec(counter,trial) + (diff(1)^2 + diff(2)^2);
+          end
+      end
+  end
+  %average across trials
+  kEnergy_vec = sum(kEnergy_vec,2) ./ size(agent_locations,1);
 end
 
 
 function movement_vec = get_displacement_vec(agent_locations)
     %start at second position and calc distance moved
-    movement_vec = zeros(size(agent_locations,3),1);% num iterations
+    movement_vec = zeros(size(agent_locations,3),size(agent_locations,1));% num iterations x num_trials
 
-    for counter =2:size(agent_locations,3)%num iterations
-        %
-        movement_vec(counter,1) = movement_vec(counter-1,1);
-        for agent_num=1:size(agent_locations,4) %num agents
-            %Add euc distance moved
-            diff = agent_locations(1,1,counter,agent_num,1:2) - agent_locations(1,1,counter-1,agent_num,1:2);
-            movement_vec(counter,1) = movement_vec(counter,1) + sqrt(diff(1)^2 + diff(2)^2);
-            %movement_vec(counter,1) = movement_vec(counter,1) + sqrt(sum((agent_locations(1,1,counter,agent_num,1:2) - agent_locations(1,1,counter-1,agent_num,1:2)).^ 2 ));
-        end
-    end
+    for trial=1:size(agent_locations,1)
+      for counter =2:size(agent_locations,3)%num iterations
+          %
+          movement_vec(counter,trial) = movement_vec(counter-1,trial);
+          for agent_num=1:size(agent_locations,4) %num agents
+              %Add euc distance moved
+              diff = agent_locations(trial,1,counter,agent_num,1:2) - agent_locations(trial,1,counter-1,agent_num,1:2);
+              movement_vec(counter,trial) = movement_vec(counter,trial) + sqrt(diff(1)^2 + diff(2)^2);
+          end
+      end
+  end
+  %average across trials
+  movement_vec = sum(movement_vec,2) ./ size(agent_locations,1);
 end
 
