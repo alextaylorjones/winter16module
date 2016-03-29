@@ -1,4 +1,4 @@
-function agent_locations = Non_adaptive_ladybug_coverage(numIterations,showPlot,num_agents,obstacles,seed,control_gain,exploration_gain)
+function agent_locations = Non_adaptive_ladybug_coverage(numIterations,showPlot,num_agents,obstacles,seed,control_gain,exploration_gain,startingLoc)
 
 close all
 K_prop = control_gain;
@@ -21,26 +21,9 @@ crs = [ 0, 0;
     xrange, 0];
 
 %Setup aegnt locations randomly
-for i = 1:n
-    valid_location = 0;
-    while (valid_location == 0)
-        %Setup location as valid (hypothesis)
-        Px(i) = rand()*xrange; 
-        Py(i) = rand()*yrange;
-        
-        valid_location = 1;
-        %Test for all obstacles
-        for ob =1:size(obstacles,1)
-            if (inpolygon(Px(i),Py(i),obstacles(ob,:,1), obstacles(ob,:,2)))
-                valid_location = 0;
-                break;
-            end
-        end
-
-    end
-end
-
-
+[Px,Py] = starting_point(obstacles,crs,startingLoc,num_agents)
+Px = Px'
+Py = Py'
 %%%%%%%%%%%%%%%%%%%%%%%% VISUALIZATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if showPlot
     verCellHandle = zeros(n,1);

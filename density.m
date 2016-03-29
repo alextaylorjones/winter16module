@@ -73,7 +73,7 @@ function r = density(x,y)
                     if x < east + width/10
                         min_x_d = min(x - (west-(width/10)),x - (east+(width/10)));
                         min_y_d = min(y - (north+(height/10)),y - (south-(height/10)));
-                        r = relative_weight - ((relative_width-1)/(height+width))*(min_x_d+min_y_d);
+                        r = relative_weight - ((relative_weight-1)/(height+width))*(min_x_d+min_y_d);
                         return;
                     end
                 end

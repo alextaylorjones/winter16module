@@ -6,11 +6,10 @@
 % per every 
 % path_step_size to specific the max step size for each agent during
 % local motion planning steps.
-function  agent_locations = combined(numIterations,showPlot,num_agents,obstacles,seed,control_gain,loop_gain,max_step)
+function  agent_locations = combined(numIterations,showPlot,num_agents,obstacles,seed,control_gain,loop_gain,max_step,startingLoc)
 
 K_prop = control_gain;
 
-showPlot = true;
 global xrange;
 xrange = 30;  %region size
 global yrange;
@@ -34,25 +33,10 @@ crs = [0, 0;
     0,0 ];
 
 %Setup agent locations randomly
-for i = 1:n
-    valid_location = 0;
-    while (valid_location == 0)
-        %Setup location as valid (hypothesis)
-        Px(i) = rand()*xrange; 
-        Py(i) = rand()*yrange;
-        
-        valid_location = 1;
-        %Test for all obstacles
-        for ob =1:size(obstacles,1)
-            if (inpolygon(Px(i),Py(i),obstacles(ob,:,1), obstacles(ob,:,2)))
-                valid_location = 0;
-                break;
-            end
-        end
 
-    end
-end
-
+[Px,Py] = starting_point(obstacles,crs,startingLoc,num_agents);
+Px = Px';
+Py = Py';
 
 %Vx,Vy store locations of virtual generators
 %copy real generator positions to virtual positions.
@@ -116,30 +100,22 @@ for counter = 1:numIterations
         Px2(i)=cx;
         Py2(i)=cy;
         
-        %If target is straight line viewable, use standard straight line
-        %driving
-%         if (~path_occluded(obstacles,Px(i),Py(i),cx,cy))
-%             Px(i) = Px(i) + -K_prop*(Px(i) - cx);
-%             Py(i) = Py(i) + -K_prop*(Py(i) - cy);
-%         else
-        
-            [Px(i),Py(i)] = tangentBug( Px(i), Py(i), cx, cy, obstacles, loop_gain, max_step);
-%         end
-    end
+    
+            [Px(i),Py(i)] = tangentBugApprox( Px(i), Py(i), cx, cy, obstacles, loop_gain, max_step);
+   
     
     %Save real locations
     agent_locations(counter,:,1) = Px;
     agent_locations(counter,:,2) = Py;
     
     %DEBUG ensure all agents do not appear in obstacles
-    for j =1:num_agents
-        for ob = 1:size(obstacles,1)
-               
-            assert(~inpolygon(Px(j),Py(j),obstacles(ob,:,1),obstacles(ob,:,2)));
-        end
+%     for j =1:num_agents
+%         for ob = 1:size(obstacles,1)
+%                            assert(~inpolygon(Px(j),Py(j),obstacles(ob,:,1),obstacles(ob,:,2)));
+%         end
+%     end
+    
     end
-    
-    
 % Visualization of agent paths
     if showPlot
         
@@ -167,7 +143,7 @@ for counter = 1:numIterations
       
 
 
-end
+    end
 
 end
 
@@ -360,6 +336,69 @@ for ij=1:length(C)
         C{ij}=ix;
    
 end
+end
+
+% an approx function for tangentBug
+
+function [px,py] = tangentBugApprox(startx,starty,endx,endy,obstacle,loop_gain,max_step)
+    
+    goal=[endx endy];
+    
+    min_point = [-1 -1];
+    min_dist = Inf;
+            
+    %project the target into the region
+    for i=1:size(obstacle,1)
+        if (~inpolygon(goal(1), goal(2), obstacle(i,:,1), obstacle(i,:,2)))
+            continue;
+        else
+            %find the point on the boundary of the obstacle that minimizes
+            %the perpendicular bisector
+            %aka project
+
+                for j=1:size(obstacle(i,:,:),2)
+                %for vertex i, calculate the line between (i,i+1)
+                line1 = [obstacle(i,j,1) obstacle(i,j,2)];
+                if (j == size(obstacle(i,:,:),2))
+                    line2 = [obstacle(i,1,1) obstacle(i,1,2)];
+                else
+                    line2 = [obstacle(i,j+1,1) obstacle(i,j+1,2)];
+                end
+                
+                int_point = proj(goal, [line1 , line2]);
+                dist = euc_dist(int_point',goal);
+                if (dist < min_dist)
+                    min_dist = dist;
+                    min_point = int_point;
+                end
+            end
+        end
+    end
+    
+    %Set goal to projected point
+    if (min_dist < Inf)
+        goal = min_point';
+    end
+    
+    %Move goal just outside of obstacle (either toward or away from
+    %robot)
+%     goal_twiddle1 = goal + 0.05* (goal - [startx,starty]);
+%     goal_twiddle2 = goal - 0.05* (goal - [startx,starty]);
+% 
+%     if ~inpolygon(goal_twiddle1(1),goal_twiddle1(2),obstacle(i,:,1),obstacle(i,:,2))
+%         assert(inpolygon(goal_twiddle2(1),goal_twiddle2(2),obstacle(i,:,1),obstacle(i,:,2)));
+%         goal = goal_twiddle1;
+% 
+%     elseif ~inpolygon(goal_twiddle2(1),goal_twiddle2(2),obstacle(i,:,1),obstacle(i,:,2))
+%         assert(inpolygon(goal_twiddle1(1),goal_twiddle1(2),obstacle(i,:,1),obstacle(i,:,2)));
+%         goal = goal_twiddle2;
+%     else %Should never reach this, or else twiddle found no point near projection to use
+%         assert(false);
+% 
+%     end
+     
+    px = goal(1);
+    py = goal(2);
 end
 
 %function for tangent bug. have to tweak the sensor range and the distance

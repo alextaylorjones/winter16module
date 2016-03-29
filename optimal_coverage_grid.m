@@ -1,65 +1,51 @@
-function [Px, Py,COST] = optimal_coverage_grid(Px,Py, crs, numIterations, showPlot)
+function agent_locations = optimal_coverage_grid(numIterations,showPlot,num_agents,obstacles,seed,startingLoc)
+close all;
 
-close all
+xrange = 30;  %region size
+yrange = 30;
+n = num_agents; %number of robots 
 
-seed = 2;
-rng(seed);
 
-num_agents = 5;
+crs = [ 1, 1;
+    1, yrange;
+    xrange, yrange;
+    xrange, 1];
 
-if nargin < 1   % demo mode
-    showPlot = true;
-    numIterations  = 1000;
-    xrange = 30;  %region size
-    yrange = 30;
-    n = num_agents; %number of robots  (changing the number of robots is interesting)
+agent_locations = zeros(numIterations,num_agents,2);
 
-    
-    crs = [ 0, 0;
-        0, yrange;
-        xrange, yrange;
-        xrange, 0];
-    
-    %Build grid array - Assume x, y start at 0
-    grid = zeros(floor(xrange)+1,floor(yrange)+1);
-    
-    obstacles(1,:,:) = [3,2;10,2;10,20;3,20;3,8;6,8;6,6;3,6];
-        
-    %Obstruct grid elements who intersect the boundary of the region
-    for i = 0:size(grid,1)-1
-        for j = 0:size(grid,2)-1
-            if (~inpolygon(i,j, crs(:,1),crs(:,2)))
-                grid(i+1,j+1) = -1;
-            end
-            
-            for ob = 1:size(obstacles,1)
-                if inpolygon(i,j,obstacles(ob,:,1), obstacles(ob,:,2))
-                    grid(i,j) = -ob;
-                end
+%Build grid array - Assume x, y start at 0
+grid = zeros(floor(xrange),floor(yrange));
+
+%Obstruct grid elements who intersect the boundary of the region
+% or in obstacles
+for i = 1:xrange
+    for j = 1:yrange
+        %Precompute density for each grid cell.
+        density_mat(i,j) = density(i,j);
+
+        if (~inpolygon(i,j, crs(:,1),crs(:,2)))
+            grid(i,j) = -1;
+        end
+        for ob = 1:size(obstacles,1)
+            if inpolygon(i,j,obstacles(ob,:,1), obstacles(ob,:,2))
+                grid(i,j) = -ob;
             end
         end
     end
-    
-    Px = zeros(n,1);
-    Py = zeros(n,1);
-    
-    %Place robots randomly on grid
-    for i = 1:numel(Px)  
-        Px(i) = randi(size(grid,1));
-        Py(i) = randi(size(grid,2));
-
-        while (grid(Px(i)+1,Py(i)+1) ~= 0)
-            Px(i) = randi(size(grid,1));
-            Py(i) = randi(size(grid,2));
-        end
-        
-        grid(Px(i)+1,Py(i)+1) = i;
-    end
-else
-    xrange = max(crs(:,1));
-    yrange = max(crs(:,2));
-    n = numel(Px); %number of robots  
 end
+
+
+Px = zeros(n,1);
+Py = zeros(n,1);
+
+%Place robots randomly on grid
+[Px,Py] = starting_point_discrete(obstacles,startingLoc,num_agents,grid);
+
+
+for i=1:numel(Px)
+  grid(Px(i),Py(i))=i;
+end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%% VISUALIZATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if showPlot
@@ -88,10 +74,6 @@ COST = zeros(numIterations*n,1);
 
 % Iteratively Apply Optimal Coverage Algorithm by Hou et al.
 for counter = 1:numIterations
-            %DEBUG
-        if counter == 9
-            assert(true);
-        end
     if showPlot
         set(currHandle,'XData',Px,'YData',Py);%plot current position
         for i = 1:numel(Px) % color according to
@@ -118,9 +100,9 @@ for counter = 1:numIterations
         %and coverage cost
         neighbors_free = [-1];
         %North
-        if (Py(i) + 1 <= floor(yrange) && grid(Px(i)+1,Py(i) + 2) == 0)
+        if (Py(i) + 1 <= floor(yrange) && grid(Px(i),Py(i) + 1) == 0)
             Py(i) = Py(i) + 1;
-            [v,c] = VoronoiBounded(Px+rand(n,1)/100, Py+rand(n,1)/100,crs);
+            [v,c] = VoronoiBounded(Px, Py,crs);
             %cost_diff(1,1) = calculateCoverageCost(grid,Px,Py,v,c) - current_cost;
             cost_diff(1,1) = calculateContinousCoverageCost(Px,Py,v,c) - current_cost;
             Py(i) = Py(i) - 1;
@@ -128,18 +110,18 @@ for counter = 1:numIterations
             neighbors_free(size(neighbors_free,2)+1) = 1;
         end
         %South
-        if (Py(i) - 1 >= 0 && grid(Px(i)+1,Py(i) ) == 0)
+        if (Py(i) - 1 >= 1 && grid(Px(i),Py(i)-1 ) == 0)
             Py(i) = Py(i) - 1;
-            [v,c] = VoronoiBounded(Px+rand(n,1)/100, Py+rand(n,1)/100,crs);
+            [v,c] = VoronoiBounded(Px, Py,crs);
             %cost_diff(2,1) = calculateCoverageCost(grid,Px,Py,v,c) - current_cost;
             cost_diff(2,1) = calculateContinousCoverageCost(Px,Py,v,c) - current_cost;
             Py(i) = Py(i) + 1;
             neighbors_free(size(neighbors_free,2)+1) = 2;
         end
         %East
-        if (Px(i) + 1 <= floor(xrange) && grid(Px(i) + 2,Py(i)+1)== 0)
+        if (Px(i) + 1 <= floor(xrange) && grid(Px(i) + 1,Py(i))== 0)
             Px(i) = Px(i) + 1;
-            [v,c] = VoronoiBounded(Px+rand(n,1)/100, Py+rand(n,1)/100,crs);
+            [v,c] = VoronoiBounded(Px, Py,crs);
             %cost_diff(3,1) = calculateCoverageCost(grid,Px,Py,v,c) - current_cost;
             cost_diff(3,1) = calculateContinousCoverageCost(Px,Py,v,c) - current_cost;
             Px(i) = Px(i) - 1;
@@ -147,9 +129,9 @@ for counter = 1:numIterations
             neighbors_free(size(neighbors_free,2)+1) = 3;
         end
         %West
-        if (Px(i) - 1 >= 0 && grid(Px(i) ,Py(i)+1) == 0)
+        if (Px(i) - 1 >= 1 && grid(Px(i)-1 ,Py(i)) == 0)
             Px(i) = Px(i)  - 1;
-            [v,c] = VoronoiBounded(Px+rand()/100, Py+rand()/100,crs);
+            [v,c] = VoronoiBounded(Px, Py,crs);
             %cost_diff(4,1) = calculateCoverageCost(grid,Px,Py,v,c) - current_cost;
             cost_diff(4,1) = calculateContinousCoverageCost(Px,Py,v,c) - current_cost;
             Px(i) = Px(i) + 1;
@@ -169,9 +151,10 @@ for counter = 1:numIterations
         if size(neighbors_free,2) >= 1
             
             max_cost = max(cost_diff);
+            
             %Use probabilities taken from exp(-cost_diff/alpha(t)) to generate a random move
-            move_probabilities = exp(-cost_diff/alpha(counter,n,size(grid,1)*size(grid,2),max_cost))...
-                        * (1/(size(neighbors_free,2)-1));
+            move_probabilities = exp(-cost_diff/( 0.01 + alpha(counter,n,size(grid,1)*size(grid,2),(max_cost))))...
+                        * (1/(size(neighbors_free,2)));
         
         
             move_interval_prob = zeros(size(neighbors_free,2),1);
@@ -184,6 +167,8 @@ for counter = 1:numIterations
             end
 
                   %Generate the move randomly
+                  %DEBUG
+              move_interval_prob
             r = rand();
             move = -1;
             for iter = 1:(size(neighbors_free,2))
@@ -196,34 +181,42 @@ for counter = 1:numIterations
             %Move point and update grid location
             %Assert no other point is in the moved-to-location
             if move == 1 %North
-                assert(grid(Px(i)+1,Py(i)+1) == i);
-                grid(Px(i)+1,Py(i)+1) = 0;
+                assert(grid(Px(i),Py(i)) == i);
+                assert(grid(Px(i),Py(i)+1) == 0);
+                grid(Px(i),Py(i)) = 0;
                 Py(i) = Py(i) + 1;
-                assert(grid(Px(i)+1,Py(i)+1) == 0);
-                grid(Px(i)+1,Py(i)+1) = i;
+                assert(grid(Px(i),Py(i)) == 0);
+                grid(Px(i),Py(i)) = i;
             elseif move == 2 %South
-                assert(grid(Px(i)+1,Py(i)+1) == i);
-                grid(Px(i)+1,Py(i)+1) = 0;
+                assert(grid(Px(i),Py(i)) == i);
+                assert(grid(Px(i),Py(i)-1) == 0);
+                grid(Px(i),Py(i)) = 0;
                 Py(i) = Py(i) - 1;
-                assert(grid(Px(i)+1,Py(i)+1) == 0);
-                grid(Px(i)+1,Py(i)+1) = i;
+                assert(grid(Px(i),Py(i)) == 0);
+                grid(Px(i),Py(i)) = i;
             elseif move == 3 %East
-                assert(grid(Px(i)+1,Py(i)+1) == i);
-                grid(Px(i)+1,Py(i)+1) = 0;
+                assert(grid(Px(i),Py(i)) == i);
+                assert(grid(Px(i)+1,Py(i)) == 0);
+                grid(Px(i),Py(i)) = 0;
                 Px(i) = Px(i) + 1;
-                assert(grid(Px(i)+1,Py(i)+1) == 0);
-                grid(Px(i)+1,Py(i)+1) = i;
+                assert(grid(Px(i),Py(i)) == 0);
+                grid(Px(i),Py(i)) = i;
             elseif move == 4 %West
-                assert(grid(Px(i)+1,Py(i)+1) == i);
-                grid(Px(i)+1,Py(i)+1) = 0;
+                assert(grid(Px(i),Py(i)) == i);
+                assert(grid(Px(i)-1,Py(i)) == 0);
+                grid(Px(i),Py(i)) = 0;
                 Px(i) = Px(i) - 1;
-                assert(grid(Px(i)+1,Py(i)+1) == 0);
-                grid(Px(i)+1,Py(i)+1) = i;
+                assert(grid(Px(i),Py(i)) == 0);
+                grid(Px(i),Py(i)) = i;
             end
         end
         
     end
-     
+    
+    %Store agent locations
+    agent_locations(counter,:,1) = Px;
+    agent_locations(counter,:,2) = Py;
+    
     
     if showPlot
         for i = 1:numel(c) % update Voronoi cells
@@ -244,16 +237,13 @@ for counter = 1:numIterations
     
 end
 %Plot cost function
-V = 1:numIterations*n;
-figure (2);
-plot(V,(COST));
 
 %TODO: pass in values of r and m
 %TODO: do a real calculation of max_cost
 function a = alpha(counter,m,grid_area,max_cost)
 
-%a = m*grid_area*max_cost/log(counter+1);
-a = max_cost/log(counter+1);
+a = m*(grid_area/100)*max_cost/log(counter+1);
+%a = max_cost/log(counter+1);
 
 
 function cost = calculateContinousCoverageCost(Px,Py,v,c)

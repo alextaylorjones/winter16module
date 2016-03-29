@@ -1,4 +1,4 @@
-function agent_locations = loydsAlgorithm_nonuniform(numIterations,showPlot,num_agents,obstacles,seed,control_gain)
+function agent_locations = loydsAlgorithm_nonuniform(numIterations,showPlot,num_agents,obstacles,seed,control_gain,startingLoc)
 
 %loydsAlgorithm(0.01*rand(50,1),zeros(50,1)+1/2, [0,0;0,1;1,1;1,0], 200, true)
 
@@ -21,24 +21,7 @@ crs = [ 0, 0;
     xrange, 0];
 
 %Setup aegnt locations randomly
-for i = 1:n
-    valid_location = 0;
-    while (valid_location == 0)
-        %Setup location as valid (hypothesis)
-        Px(i) = rand()*xrange; 
-        Py(i) = rand()*yrange;
-        
-        valid_location = 1;
-        %Test for all obstacles
-        for ob =1:size(obstacles,1)
-            if (inpolygon(Px(i),Py(i),obstacles(ob,:,1), obstacles(ob,:,2)))
-                valid_location = 0;
-                break;
-            end
-        end
-
-    end
-end
+[Px,Py] = starting_point(obstacles,crs,startingLoc,num_agents)
 
 
 %%%%%%%%%%%%%%%%%%%%%%%% VISUALIZATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

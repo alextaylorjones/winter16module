@@ -1,7 +1,6 @@
-function agent_locations = approximation_discrete_nonconvex_coverage(numIteration, showPlot, num_agents, obstacles,seed)
+function agent_locations = approximation_discrete_nonconvex_coverage(numIteration, showPlot, num_agents, obstacles,seed,startingLoc)
 close all
 
-rng(seed);
 
 %region size
 global xrange;
@@ -38,23 +37,9 @@ for i = 1:xrange
         end
     end
 end
-
-Px = zeros(n,1);
-Py = zeros(n,1);
-
-%Place robots randomly on grid
-for i = 1:numel(Px)  
-    Px(i) = randi(xrange);
-    Py(i) = randi(yrange);
-
-    while (grid_mat(Px(i),Py(i)) ~= 0)
-        Px(i) = randi(xrange);
-        Py(i) = randi(yrange);
-    end
-
-    grid_mat(Px(i),Py(i)) = i;
-end
-
+%Setup avaialable moving directions from each location in the grid_mat
+setup_path_mat();
+[Px,Py] = starting_point_discrete(obstacles,startingLoc,num_agents,grid_mat);
 
 %%%%%%%%%%%%%%%%%%%%%%%% VISUALIZATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if showPlot
@@ -81,7 +66,7 @@ if showPlot
     titleHandle = title(['o = Robots, + = Goals, Iteration ', num2str(0)]);
 end
 %%%%%%%%%%%%%%%%%%%%%%%% END VISUALIZATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-rng(0,'twister');
+
 NUM_SP_VARS = 2; %occurpied, distance - used in sp-mat
 
 global VISITED;
@@ -214,16 +199,7 @@ for counter = 1:numIteration
         set(titleHandle,'string',['o = Robots, + = Goals, Iteration ', num2str(counter,'%3d')]);
         set(goalHandle,'XData',Px,'YData',Py);%plot goal position
         
-        for x =1:xrange
-            for y=1:yrange
-
-
-                %plot voronoi cells
-                %plot centroid
-            end
-        end
-
-        
+              
         
         axis equal
         axis([0,xrange,0,yrange]);
@@ -237,34 +213,109 @@ end
 function neighbors = get_neighbors(point,grid_mat)
     global xrange;
     global yrange;
+    global PATH_MAT;
     
     neighbors = [];
     %if not an obstacle
-    if (point(1) < xrange && grid_mat(point(1)+1,point(2)) >= 0)
+    if (point(1) < xrange && grid_mat(point(1)+1,point(2)) >= 0 && PATH_MAT(point(1),point(2),1) == 1)
         neighbors = [neighbors;1 0];
     end
-    if (point(1) < xrange && point(2) < yrange && grid_mat(point(1)+1,point(2)+1) >= 0)
+    if (point(1) < xrange && point(2) < yrange && grid_mat(point(1)+1,point(2)+1) >= 0 && PATH_MAT(point(1),point(2),2) == 1)
          neighbors = [neighbors;1 1];
     end
-    if (point(2) < yrange && grid_mat(point(1),point(2)+1) >= 0)
+    if (point(2) < yrange && grid_mat(point(1),point(2)+1) >= 0 && PATH_MAT(point(1),point(2),3) == 1)
      neighbors = [neighbors;0 1];    
     end
-    if (point(1) > 1 && point(2) < yrange && grid_mat(point(1)-1,point(2)+1) >= 0)
+    if (point(1) > 1 && point(2) < yrange && grid_mat(point(1)-1,point(2)+1) >= 0 && PATH_MAT(point(1),point(2),4) == 1)
          neighbors = [neighbors;-1 1];
     end
-    if (point(1) > 1 && grid_mat(point(1)-1,point(2)) >= 0)
+    if (point(1) > 1 && grid_mat(point(1)-1,point(2)) >= 0 && PATH_MAT(point(1),point(2),5) == 1)
          neighbors = [neighbors;-1 0];
     end
-    if (point(1) > 1 && point(2) > 1 && grid_mat(point(1)-1,point(2)-1) >= 0)
+    if (point(1) > 1 && point(2) > 1 && grid_mat(point(1)-1,point(2)-1) >= 0 && PATH_MAT(point(1),point(2),6) == 1)
          neighbors = [neighbors;-1 -1];
     end
-    if (point(2) > 1 && grid_mat(point(1),point(2)-1) >= 0)
+    if (point(2) > 1 && grid_mat(point(1),point(2)-1) >= 0 && PATH_MAT(point(1),point(2),7) == 1)
          neighbors = [neighbors;0 -1];
     end
-    if (point(1) < xrange && point(2) > 1 && grid_mat(point(1)+1,point(2)-1) >= 0)
+    if (point(1) < xrange && point(2) > 1 && grid_mat(point(1)+1,point(2)-1) >= 0 && PATH_MAT(point(1),point(2),8) == 1)
          neighbors = [neighbors;1 -1];
     end
 
+function setup_path_mat()
+  global PATH_MAT;
+  global xrange;
+  global yrange;
+
+  PATH_MAT = zeros(xrange,yrange,8);
+
+  for i = 1:xrange
+    for j=1:yrange
+      %check for feasible paths in each direction
+      % check all directions for intersection of short path from i,j to nearest neighbor
+      if (is_feasible_path(i,j,1,0) == 1)
+        PATH_MAT(i,j,1) = 1;
+      end
+      if (is_feasible_path(i,j,1,1) == 1)
+        PATH_MAT(i,j,2) = 1;
+      end
+      if (is_feasible_path(i,j,0,1) == 1)
+        PATH_MAT(i,j,3) = 1;
+      end
+      if (is_feasible_path(i,j,-1,1) == 1)
+
+        PATH_MAT(i,j,4) = 1;
+      end
+      if (is_feasible_path(i,j,-1,0) == 1)
+        PATH_MAT(i,j,5) = 1;
+      end
+      if (is_feasible_path(i,j,-1,-1) == 1)
+        PATH_MAT(i,j,6) = 1;
+      end
+      if (is_feasible_path(i,j,0,-1) == 1)
+        PATH_MAT(i,j,7) = 1;
+        end
+      if (is_feasible_path(i,j,1,-1) == 1)
+        PATH_MAT(i,j,8) = 1;
+      end 
+        %if is_feasible_path(i,j,1+mod(d+1,2),mod(d,2
+    
+    end
+  end
+
+  %tx,ty are relative targets
+function feasible = is_feasible_path(sx,sy,tx,ty)
+%NOTE: if following grid locations start at 1,not 0
+  global xrange;
+  global yrange;
+  global obstacles;
+  tx = sx+tx;
+  ty = sy+ty;
+
+  feasible = 1;
+  if (tx < 1  || ty < 1 || tx > xrange || ty > yrange)
+    feasible = 0;
+    return
+  end
+
+  for ob =1:size(obstacles,1)
+      for edge =1:size(obstacles,2)
+          vstart = obstacles(ob,edge,1:2);
+          if edge == size(obstacles,2)
+              vend = obstacles(ob,1,1:2);
+          else
+              vend = obstacles(ob,edge+1,1:2);
+          end
+          %Find the intersection point along trajectory of
+          %agent i to its destination
+          [int_x int_y] = polyxpoly([sx tx],[sy ty],[vstart(1) vend(1)],[vstart(2) vend(2)]);
+          if (~isempty(int_x) || ~isempty(int_y)) 
+            feasible = 0;
+            return
+          end
+          
+      end
+   end
 
 function d = euc_dist(p1,p2)
     d = sqrt(sum((p1 - p2) .^ 2));
@@ -310,6 +361,7 @@ global VISITED;
 global DIST;
 global xrange;
 global yrange;
+global PATH_MAT;
 
 %Reset all sp_mat elements to unvisited
 sp_mat(agent,:,:,VISITED) = 0;
