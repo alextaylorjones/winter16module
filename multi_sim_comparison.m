@@ -138,6 +138,7 @@ if (strcmp(simulation_type{1},'metric-all') == 1)
     xlabel('Iterations');
     ylabel('Kinetic Energy');
 
+    
 end
 
 end
