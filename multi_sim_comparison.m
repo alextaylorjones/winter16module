@@ -41,6 +41,20 @@ obstacle_config = obstacle_configuration;
 obstacles = get_obstacle_set();
 
 %Split based on simulation type
+if strcmp(simulation_type{1},'param-vary') == 1
+    sz = size(simulation_type);
+    for i=2:sz[2]
+       algorithm_name = simulation_type{i};
+       if strcmp(algorithm_name,'lloyd')== 1
+           
+           for control_gain=0.05:0.05:0.8
+                Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lloyd,0,startingLoc);
+           end
+       end
+    end
+    
+    
+end
 if (strcmp(simulation_type{1},'metric-all') == 1)
     control_gain_lloyd = simulation_type{2};
     control_gain_lb = simulation_type{3};
@@ -76,10 +90,10 @@ if (strcmp(simulation_type{1},'metric-all') == 1)
 
     end
         %Plot metric results
-    
+    close all;
     v = 1:num_iterations;
-    for trail=1:trials
-      print('computing stats on trial');
+    for trial=1:num_trials
+      %print('computing stats on trial');
       trial
       NUM_SAMPLES = 5000;
       cost_lloyd  = get_cost_timeline(agent_loc(trial,1,:,:,:),obstacles,NUM_SAMPLES);
@@ -202,7 +216,45 @@ function obstacles = get_obstacle_set()
       obstacles(size(obstacles,1)+1,:,:) = [spiral;spiral_ccw];
         
     end
-    
+%     if mod(ob_config,17)==0 %Office Plan
+%         obstacles(size(obstacles,1)+1,:,:) = 0.3*[60,0; 60,35; 30,35; 30,45; 70,45; 70,0; 60,0];
+%         obstacles(size(obstacles,1)+1,:,:) = 0.3*[60,100; 60,65; 30,65; 30,55; 70,55; 70,100; 60,100];
+%         obstacles(size(obstacles,1)+1,:,:) = 0.3*[0,65; 20,65; 20,55; 0,55; 0,65;0,65;0,65 ];
+%         obstacles(size(obstacles,1)+1,:,:) = 0.3*[0,45; 20,45; 20,35; 0,35; 0,45;0,65;0,65];
+%     end
+%     if mod(ob_config,19)==0 %Street
+%         for i=0:2
+%             for j=0:2
+%                 obstacles(size(obstacles,1)+1,:,:) = [4+8*i,4+8*j; 10+8*i,4+8*j; 10+8*i,10+8*j; 4+8*i,10+8*j; 4+8*i,4+8*j];
+%             end
+%         end
+%     end
+%     
+%     if mod(ob_config,23)==0
+%         obstacles(size(obstacles,1)+1,:,:) = [17.5,5; 25,7.5; 20,12.5; 17.5,12; 12,17.5; 12.5,20; 7.5,25; 5,20; 17.5,5];
+%     end
+%     if mod(ob_config,29)==0 %Random Rectangles
+%         x=[];
+%         y=[];
+%         cx=[];
+%         cy=[];
+%         obstacles(size(obstacles,1)+1,:,:)=[]
+% %         x(size(x,1)+1,:) = round(rand(1)*30)/4;
+% %         y(size(x,1)+1,:) = round(rand(1)*30)/4;
+% %         cx(size(x,1)+1,:) = round(rand(1)*30);
+% %         cy(size(x,1)+1,:) = round(rand(1)*30);
+% %         obstacles(size(obstacles,1)+1,:,:) = [cx-x,cy-y; cx+x,cy-y; cx+x,cy+y; cx-x,cy+y];
+%         
+%         for i=1:5%round(rand(1)*30)/4
+%             x(i) = round(rand(1)*30)/4;
+%             y(i) = round(rand(1)*30)/4;
+%             cx(i) =round(rand(1)*30);
+%             cy(i) =round(rand(1)*30);
+% %             if ~(polybool('intersection', x(i+1), y(i), x(i-1), y(i-1)))
+%                  obstacles(size(obstacles,1)+1,:,:) = [cx(i)-x(i),cy(i)-y(i); cx(i)+x(i),cy(i)-y(i); cx(i)+x(i),cy(i)+y(i); cx(i)-x(i),cy(i)+y(i)];         
+% %             end
+%         end
+%     end
 end
 
 %Use sampling to detesrmine global cost
@@ -278,7 +330,9 @@ function movement_vec = get_displacement_vec(agent_locations)
         movement_vec(counter,1) = movement_vec(counter-1,1);
         for agent_num=1:size(agent_locations,4) %num agents
             %Add euc distance moved
-            movement_vec(counter,1) = movement_vec(counter,1) + sqrt(sum(agent_locations(1,1,counter,agent_num,1:2) - agent_locations(1,1,counter-1,agent_num,1:2).^ 2 ));
+            diff = agent_locations(1,1,counter,agent_num,1:2) - agent_locations(1,1,counter-1,agent_num,1:2);
+            movement_vec(counter,1) = movement_vec(counter,1) + sqrt(diff(1)^2 + diff(2)^2);
+            %movement_vec(counter,1) = movement_vec(counter,1) + sqrt(sum((agent_locations(1,1,counter,agent_num,1:2) - agent_locations(1,1,counter-1,agent_num,1:2)).^ 2 ));
         end
     end
 end

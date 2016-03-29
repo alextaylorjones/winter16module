@@ -40,7 +40,8 @@ Py = zeros(n,1);
 
 %Place robots randomly on grid
 [Px,Py] = starting_point_discrete(obstacles,startingLoc,num_agents,grid);
-
+Px = Px';
+Py = Py';
 
 for i=1:numel(Px)
   grid(Px(i),Py(i))=i;

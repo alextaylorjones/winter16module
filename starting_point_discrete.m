@@ -38,7 +38,7 @@ elseif strcmp(startingLoc{1},'fixed') == 1
       success_flag = 1;
       for ob=1:size(obstacles)
 
-        if (grid_mat(sx - (j-1),sy-(i-1)) ~= 0)
+        if ( sx - (j-1) < 1 || sy - (i-1) < 1 || grid_mat(sx - (j-1),sy-(i-1)) ~= 0)
           success_flag = 0;
           break;
         end
@@ -53,5 +53,5 @@ elseif strcmp(startingLoc{1},'fixed') == 1
   end %end for
 
    
-  assert(c > num_agents); %if this assert fails, then location to start agents is infeasible
+  assert(c == num_agents); %if this assert fails, then location to start agents is infeasible
 end

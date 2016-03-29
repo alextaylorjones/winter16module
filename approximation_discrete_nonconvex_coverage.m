@@ -177,7 +177,9 @@ for counter = 1:numIteration
         Py(i) = prev(2);
     end
     %Store agent locations
-    agent_locations(counter,:,:) = [Px Py];
+    agent_locations(counter,:,1) = Px;
+    agent_locations(counter,:,2) = Py;
+    
     if showPlot
         for i = 1:num_agents % update Voronoi cells
             %TODO - find a way to plot cells
