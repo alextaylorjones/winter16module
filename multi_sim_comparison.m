@@ -567,7 +567,8 @@ function t = wall_hugging_path_length(cx,cy,Px,Py)
     end
     %If more than one intersection point, then the straight line distance moves through an
     %obstacle, so calc the path around the boundary
-    assert(size(int_points,2) < 3);
+
+    assert(size(int_points,2) < 3); % if this fails, then path intersected with more than two edges of an obstacle
     if (size(int_points,2) == 2)
         %num of obstacle
         ob = int_points(3,1);
