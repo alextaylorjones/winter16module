@@ -147,7 +147,7 @@ for counter = 1:numIterations
 
 end
 
-function t = path_occluded(obstacles,Px,Py,cx,cy)
+function p = path_occluded(obstacles,Px,Py,cx,cy)
     t = false;
     for ob =1:size(obstacles,1)
         for edge =1:size(obstacles,2)
