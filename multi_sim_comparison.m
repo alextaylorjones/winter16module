@@ -21,7 +21,7 @@
 function agent_loc = multi_sim_comparison(obstacle_configuration, simulation_type, density_function_type,density_function_params, num_agents, num_iterations, startingLoc)
 
 %Num samples runs of each algorithm
-num_trials = 2;
+num_trials = 1;
 
 %random seed
 seed = 19;
@@ -42,22 +42,152 @@ obstacles = get_obstacle_set();
 
 %Split based on simulation type
 if strcmp(simulation_type{1},'param-vary') == 1
+    NUM_SAMPLES = 5000;
     sz = size(simulation_type);
     for i=2:sz(2)
        algorithm_name = simulation_type{i};
-       if strcmp(algorithm_name,'lloyd')== 1
-           
-           for control_gain=0.05:0.05:0.8
-                Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lloyd,0,startingLoc);
-           end
-         
-       end
+       %Run the algorithm specified against reasonable parameter ranges
+       %Once there is convergence (change in displacement over iteration is within 5% for three runs in a row), 
+       %then we assess the metrics of concern
+       %after sweeping through all parameters, visualize change of metrics at convergence for specified algorithm
+       agent_loc = zeros(num_trials,1,num_iterations,num_agents,2);
        
+       if strcmp(algorithm_name,'lloyd')== 1
+          
+           i = 1;
+           %Modify this to alter randge of parameters to sweep
+           param_sweep = 0.05:0.05:0.25;
+           cost_vec = zeros(numel(param_sweep),num_trials);
+           disp_vec = zeros(numel(param_sweep),num_trials);
+           kEnergy_vec = zeros(numel(param_sweep),num_trials);
+
+           for control_gain=param_sweep
+             for trial=1:num_trials
+                agent_loc(trial,i,1:num_iterations,1:num_agents,1:2) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain,0,startingLoc); 
+                cost_vec(i,trial) = cost_vec(i) + get_final_cost(agent_loc(trial,i,1:num_iterations,1:num_agents,1:2), obstacles,NUM_SAMPLES);
+                kEnergy_vec(i,trial) = kEnergy_vec(i) + get_final_kEnergy(agent_loc(trial,i,1:num_iterations,1:num_agents,1:2));
+                disp_vec(i,trial) = disp_vec(i) + get_final_displacement(agent_loc(trial,i,1:num_iterations,1:num_agents,1:2));
+
+
+                
+              end
+              i = i + 1;
+           end
+        %chart lloyd;
+          close all;
+          figure(1);
+          plot(param_sweep,sum(cost_vec,2));
+          title('Combined Algorithm Final Cost vs Control Gain');
+          figure(2);
+          plot(param_sweep,sum(disp_vec,2));
+          title('Combined Algorithm Total Displacement vs Control Gain');
+          figure(3);
+          plot(param_sweep,sum(kEnergy_vec,2));
+          title('Combined Algorithm Total kEnergy vs Control Gain');
+               
+       elseif strcmp(algorithm_name,'ladybug')== 1
+           %Modify these to alter range of parameters to sweep
+         param_sweep_exp = 0.05:0.05:0.10;
+         param_sweep_ctl = 0.05:0.05:0.15;
+         i = 1;
+          cost_vec = zeros(numel(param_sweep_exp)*numel(param_sweep_ctl),1);
+           disp_vec = zeros(numel(param_sweep_exp)*numel(param_sweep_ctl),1);
+           kEnergy_vec = zeros(numel(param_sweep_exp)*numel(param_sweep_ctl),1);
+
+
+          for exploration_gain = param_sweep_exp
+            for control_gain=param_sweep_ctl
+              for trial=1:num_trials
+                agent_loc(trial,i,1:num_iterations,1:num_agents,1:2) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain,exploration_gain,startingLoc); 
+
+                cost_vec(i) = cost_vec(i) + get_final_cost(agent_loc(trial,i,1:num_iterations,1:num_agents,1:2), obstacles,NUM_SAMPLES);
+                kEnergy_vec(i) = kEnergy_vec(i) + get_final_kEnergy(agent_loc(trial,i,1:num_iterations,1:num_agents,1:2));
+                disp_vec(i) = disp_vec(i) + get_final_displacement(agent_loc(trial,i,1:num_iterations,1:num_agents,1:2));
+
+              end
+
+             i = i + 1; 
+            end
+          end
+
+
+          %chart ladybug
+          close all;
+          figure(1);
+          hold on;
+          h = zeros(1,numel(param_sweep_exp));
+          for i=1:numel(param_sweep_exp)
+            col(i) = (i/numel(param_sweep_exp))* [1,1,1];
+          end
+          for i = 1:numel(param_sweep_exp)
+            h(i) = plot(param_sweep_ctl,sum(cost_vec((i-1)*numel(param_sweep_ctl) + 1:i*numel(param_sweep_ctl)),2), 'DisplayName',sprintf('exp-gain%2f',param_sweep_exp(i)),'Color',col(i));
+          end
+          title('Nonadaptive Ladybug Algorithm Final Cost vs Control Gain');
+          legend(h);
+          hold off;
+          
+          figure(2);
+          hold on;
+          h = zeros(1,numel(param_sweep_exp));
+          for i = 1:numel(param_sweep_exp)
+            h(i) = plot(param_sweep_ctl,sum(disp_vec((i-1)*numel(param_sweep_ctl) + 1:i*numel(param_sweep_ctl)),2), 'DisplayName',sprintf('exp-gain%2f',param_sweep_exp(i)),'Color',col(i));
+          end
+          title('Nonadaptive Ladybug Algorithm Total Displacement vs Control Gain');
+          legend(h);
+          hold off;
+
+          figure(3);
+          hold on;
+          h = zeros(1,numel(param_sweep_exp));
+          for i = 1:numel(param_sweep_exp)
+            h(i) = plot(param_sweep_ctl,sum(cost_vec((i-1)*numel(param_sweep_ctl) + 1:i*numel(param_sweep_ctl)),2), 'DisplayName',sprintf('exp-gain%2f',param_sweep_exp(i)),'Color',col(i));
+          end
+          title('Nonadaptive Ladybug Algorithm Total kEnergy vs Control Gain');
+          legend(h)
+          hold off;
+
+       elseif strcmp(algorithm_name,'combined')== 1
+         %control gain for virtual generators
+         i = 1;
+         max_step = 0;
+         
+         %Modify this to change parameter range
+           param_sweep = 0.05:0.05:0.5;
+           
+           cost_vec = zeros(numel(param_sweep),1);
+           disp_vec = zeros(numel(param_sweep),1);
+           kEnergy_vec = zeros(numel(param_sweep),1);
+
+
+          for control_gain=param_sweep
+            for trial=1:num_trials
+                agent_loc(trial,i,1:num_iterations,1:num_agents,1:2) = combined(num_iterations,show_plot,num_agents,obstacles,seed,control_gain,0,max_step,startingLoc);          
+                cost_vec(i) = cost_vec(i) + get_final_cost(agent_loc(trial,i,1:num_iterations,1:num_agents,1:2), obstacles,NUM_SAMPLES);
+                kEnergy_vec(i) = kEnergy_vec(i) + get_final_kEnergy(agent_loc(trial,i,1:num_iterations,1:num_agents,1:2));
+                disp_vec(i) = disp_vec(i) + get_final_displacement(agent_loc(trial,i,1:num_iterations,1:num_agents,1:2));
+
+            end
+            i = i + 1;
+          end
+          %chart combined metrics
+          close all;
+          figure(1);
+          plot(param_sweep,sum(cost_vec,2));
+          title('Combined Algorithm Final Cost vs Control Gain');
+          figure(2);
+          plot(param_sweep,sum(disp_vec,2));
+          title('Combined Algorithm Total Displacement vs Control Gain');
+          figure(3);
+          plot(param_sweep,sum(kEnergy_vec,2));
+          title('Combined Algorithm Total kEnergy vs Control Gain');
+          
+       end
        
     end
     
     
 end
+
 if (strcmp(simulation_type{1},'metric-all') == 1)
     control_gain_lloyd = simulation_type{2};
     control_gain_lb = simulation_type{3};
@@ -75,21 +205,21 @@ if (strcmp(simulation_type{1},'metric-all') == 1)
         %Run lloyd style algorithm (use degenerate
         %non_adaptive_ladybug_coverage
         
-        agent_loc(cur_trial,1,:,:,:) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lloyd,0,startingLoc);
+        %agent_loc(cur_trial,1,:,:,:) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lloyd,0,startingLoc);
       
         %Run approximation via search based grid algorithm
-        agent_loc(cur_trial,2,:,:,:) = approximation_discrete_nonconvex_coverage(num_iterations,show_plot,num_agents,obstacles,seed,startingLoc);
+        %agent_loc(cur_trial,2,:,:,:) = approximation_discrete_nonconvex_coverage(num_iterations,show_plot,num_agents,obstacles,seed,startingLoc);
 
         %Run combined tangentbug and lloyd
         max_step = 0.25;
         B = combined(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_combined,loop_gain,max_step,startingLoc);
         agent_loc(cur_trial,3,:,:,:) = B;
         %Run optimal annealing, algorithm
-         A = optimal_coverage_grid(num_iterations,show_plot,num_agents,obstacles,seed,startingLoc);
-        agent_loc(cur_trial,4,:,:,:)= A;
+        % A = optimal_coverage_grid(num_iterations,show_plot,num_agents,obstacles,seed,startingLoc);
+        %agent_loc(cur_trial,4,:,:,:)= A;
         %Run non adaptive ladybug algorithm
 
-        agent_loc(cur_trial,5,:,:,:) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lb, exploration_gain,startingLoc);
+        %agent_loc(cur_trial,5,:,:,:) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lb, exploration_gain,startingLoc);
 
     end
         %Plot metric results
@@ -349,3 +479,61 @@ function movement_vec = get_displacement_vec(agent_locations)
   movement_vec = sum(movement_vec,2) ./ size(agent_locations,1);
 end
 
+function final_cost = get_final_cost(agent_locations,obstacles,NUM_SAMPLES)
+%arg: 1 x 1 x num_iterations x num_agents x 2
+	xrange = 30;
+	yrange = 30;
+    
+  if min(agent_locations == 0) == 1
+      final_cost = 0;
+      return;
+  end
+        
+	sample_points(:,1) = rand(NUM_SAMPLES,1)*xrange;
+	sample_points(:,2) = rand(NUM_SAMPLES,1)*yrange;
+	sample_points(:,3) = zeros(NUM_SAMPLES,1);
+    used_samples = NUM_SAMPLES;
+	for i =1:NUM_SAMPLES
+		for ob = 1:size(obstacles,1)
+
+			if inpolygon(sample_points(i,1), sample_points(i,2),obstacles(ob,:,1),obstacles(ob,:,2))
+				sample_points(i,3) = -1;
+        used_samples = used_samples - 1;
+				break;
+			end
+		end
+	end
+
+  %num trials, repeat and average cost
+  final_cost=0;
+  for trial = 1:size(agent_locations,1)
+
+    for i=1:NUM_SAMPLES
+        if (sample_points(i,3) == 0) %if non zero,then random point was in obstacle - dont sample
+        min_dist = Inf;
+        min_agent = -1;
+            for ag = 1:size(agent_locations,4) %num agents
+                dist = sqrt(sum( ([agent_locations(trial,1,size(agent_locations,3),ag,1), agent_locations(trial,1,size(agent_locations,3),ag,2)] - sample_points(i,1:2)) .^ 2));% * density(sample_points(i,1:2));
+                if dist < min_dist
+                    min_agent = ag;
+                    min_dist = dist;
+                end
+            end
+            
+            final_cost = final_cost + min_dist * density(sample_points(i,1),sample_points(i,2));
+         end
+    end
+     
+  end
+end
+
+function kE= get_final_kEnergy(agent_loc)
+%arg: 1 x 1 x num_iterations x num_agents x 2
+  kv = get_kEnergy_timeline(agent_loc);
+  kE = kv(numel(kv))
+end
+function disp = get_final_displacement(agent_loc)
+%arg: 1 x 1 x num_iterations x num_agents x 2
+    disp_vec = get_displacement_vec(agent_loc);
+    disp = disp_vec(numel(disp_vec));
+end

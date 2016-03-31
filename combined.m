@@ -82,7 +82,7 @@ for counter = 1:numIterations
     for i = 1:numel(c) 
         
         %calculate the centroid of each cell
-        [cx,cy] = PolyCentroidNonuniformDensity(v(c{i},1),v(c{i},2),counter);
+        [cx,cy] = PolyCentroidNonuniformDensity(v(c{i},1),v(c{i},2),obstacles);
         
         cx = min(xrange,max(0, cx));
         cy = min(yrange,max(0, cy));
@@ -179,26 +179,43 @@ function a = triangle_area(P1,P2,P3)
     a = sqrt(s*(s-e12)*(s-e23)*(s-e31));    
 end
 
-%A gaussion density function around center point (cx,cy)
-function r = density(x,y)
-	r = exp(-(x-5)*(x-5)-(y-5)*(y-5));
+
+%Use Osada et. al [02] method for random sampling from triangle
+function P = sample_rand_triangle(P1,P2,P3, N)
+    
+    Bounds(1:N,1) = 0;
+    Bounds(1:N,2) = 1;
+    
+    R1 = unifrnd(Bounds(1:N,1),Bounds(1:N,2));
+    R2 = unifrnd(Bounds(1:N,1),Bounds(1:N,2));
+    
+    %Points array
+    P(1:N,1:2) = 0;
+    i = 1;
+    while i <= N
+        %generate a point on the triangle from random variables r1(i),
+        %r2(i)
+        P(i,1:2) = (1-sqrt(R1(i)))*P1 + sqrt(R1(i))*(1-R2(i))*P2 + sqrt(R1(i))*R2(i)*P3;
+        i = i + 1;
+    end
 end
 
-function [Cx,Cy] = PolyCentroidNonuniformDensity(X,Y, i)
+function [Cx,Cy] = PolyCentroidNonuniformDensity(X,Y, obstacles)
     CELL_SAMPLES = 500;
     %Triangulate points - returns a list of indices
     n = size(X,1)-1;
+    %Reorient vertices
     x_r = fliplr(X);
     y_r = fliplr(Y);
     
+    %Triangulate using script of same name
     triangles = polygon_triangulate(n, x_r(1:n), y_r(1:n));
-  
-    j = 1;
     
     %Array of areas of each triangle in the polygon
     tri_areas(1:n-2,1) = 0;
     
     %Calculate triangle areas & convert indices to points
+    j=1;
     while j <= n-2
         %Grab indices of jth triangle
         i1 = triangles(1,j);
@@ -210,7 +227,8 @@ function [Cx,Cy] = PolyCentroidNonuniformDensity(X,Y, i)
         P2 = [X(i2) Y(i2)];
         P3 = [X(i3) Y(i3)];
         
-        tri_areas(j,1) = triangle_area(P1,P2,P3); 
+        tri_areas(j,1) = triangle_area(P1,P2,P3);
+  
         
         j = j + 1;
     end
@@ -249,36 +267,40 @@ function [Cx,Cy] = PolyCentroidNonuniformDensity(X,Y, i)
     j = 1;
     numerator_vec_sum = [0 0];
     denominator_sum = 0;
+    sample_counter = 0;
+    DENSITY = zeros(current_sample,1);
     while j < current_sample
-        D = density(random_points(j,1),random_points(j,2));
-        numerator_vec_sum = numerator_vec_sum + random_points(j,:)*D;
-        denominator_sum = denominator_sum + D;
+        
+        %Check to see if random sample is in obstacle
+        sample_in_obs_flag = 0;
+        for ob =1:size(obstacles)
+            if inpolygon(random_points(j,1),random_points(j,2),obstacles(ob,:,1), obstacles(ob,:,2))
+                sample_in_obs_flag = 1; 
+                
+                break;
+            end
+        end
+        if (sample_in_obs_flag == 1)
+            sample_in_obs_flag = 0;
+            j = j + 1;
+            continue;
+        end
+        sample_counter = sample_counter+1;
+        DENSITY(j,1) = density(random_points(j,1),random_points(j,2));
+        numerator_vec_sum = numerator_vec_sum + random_points(j,:)*DENSITY(j,1);
+        denominator_sum = denominator_sum + DENSITY(j,1);
+
         j = j + 1;
     end
+    %Print actual used samples DEBUG
+    %sample_counter
+    
+
+        
     
     C_v = numerator_vec_sum / denominator_sum;
     Cx = C_v(1);
     Cy = C_v(2);
-end
-
-%Use Osada et. al [02] method for random sampling from triangle
-function P = sample_rand_triangle(P1,P2,P3, N)
-    
-    Bounds(1:N,1) = 0;
-    Bounds(1:N,2) = 1;
-    
-    R1 = unifrnd(Bounds(1:N,1),Bounds(1:N,2));
-    R2 = unifrnd(Bounds(1:N,1),Bounds(1:N,2));
-    
-    %Points array
-    P(1:N,1:2) = 0;
-    i = 1;
-    while i <= N
-        %generate a point on the triangle from random variables r1(i),
-        %r2(i)
-        P(i,1:2) = (1-sqrt(R1(i)))*P1 + sqrt(R1(i))*(1-R2(i))*P2 + sqrt(R1(i))*R2(i)*P3;
-        i = i + 1;
-    end
 end
 
 function [V,C]=VoronoiBounded(x,y, crs)
