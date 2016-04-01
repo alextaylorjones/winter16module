@@ -79,21 +79,21 @@ if strcmp(simulation_type{1},'param-vary') == 1
               i = i + 1;
            end
         %chart lloyd;
-          close all;
-          figure(1);
+          %close all;
+          figure;
           plot(param_sweep,sum(cost_vec,2));
           title('Combined Algorithm Final Cost vs Control Gain');
-          figure(2);
+          figure;
           plot(param_sweep,sum(disp_vec,2));
           title('Combined Algorithm Total Displacement vs Control Gain');
-          figure(3);
+          figure;
           plot(param_sweep,sum(kEnergy_vec,2));
           title('Combined Algorithm Total kEnergy vs Control Gain');
                
        elseif strcmp(algorithm_name,'ladybug')== 1
            %Modify these to alter range of parameters to sweep
-         param_sweep_exp = 0.05:0.05:0.10;
-         param_sweep_ctl = 0.05:0.05:0.15;
+         param_sweep_exp = 0.05:0.05:0.50;
+         param_sweep_ctl = 0.05:0.05:0.5;
          i = 1;
           cost_vec = zeros(numel(param_sweep_exp)*numel(param_sweep_ctl),1);
            disp_vec = zeros(numel(param_sweep_exp)*numel(param_sweep_ctl),1);
@@ -117,8 +117,8 @@ if strcmp(simulation_type{1},'param-vary') == 1
 
 
           %chart ladybug
-          close all;
-          figure(1);
+          %close all;
+          figure ;
           hold on;
           h = zeros(1,numel(param_sweep_exp));
           for i=1:numel(param_sweep_exp)
@@ -131,7 +131,7 @@ if strcmp(simulation_type{1},'param-vary') == 1
           legend(h);
           hold off;
           
-          figure(2);
+          figure ;
           hold on;
           h = zeros(1,numel(param_sweep_exp));
           for i = 1:numel(param_sweep_exp)
@@ -141,7 +141,7 @@ if strcmp(simulation_type{1},'param-vary') == 1
           legend(h);
           hold off;
 
-          figure(3);
+          figure ;
           hold on;
           h = zeros(1,numel(param_sweep_exp));
           for i = 1:numel(param_sweep_exp)
@@ -157,7 +157,7 @@ if strcmp(simulation_type{1},'param-vary') == 1
          max_step = 0;
          
          %Modify this to change parameter range
-           param_sweep = 0.05:0.05:0.5;
+           param_sweep = 0.05:0.05:0.9;
            
            cost_vec = zeros(numel(param_sweep),1);
            disp_vec = zeros(numel(param_sweep),1);
@@ -175,14 +175,14 @@ if strcmp(simulation_type{1},'param-vary') == 1
             i = i + 1;
           end
           %chart combined metrics
-          close all;
-          figure(1);
+          %close all;
+          figure;
           plot(param_sweep,sum(cost_vec,2));
           title('Combined Algorithm Final Cost vs Control Gain');
-          figure(2);
+          figure;
           plot(param_sweep,sum(disp_vec,2));
           title('Combined Algorithm Total Displacement vs Control Gain');
-          figure(3);
+          figure;
           plot(param_sweep,sum(kEnergy_vec,2));
           title('Combined Algorithm Total kEnergy vs Control Gain');
           
