@@ -21,7 +21,7 @@
 function agent_loc = multi_sim_comparison(obstacle_configuration, simulation_type, density_function_type,density_function_params, num_agents, num_iterations, startingLoc)
 
 %Num samples runs of each algorithm
-num_trials = 1;
+num_trials = 3;
 
 %random seed
 seed = 19;
@@ -47,7 +47,7 @@ get_obstacle_set();
 if strcmp(simulation_type{1},'param-vary') == 1
     NUM_SAMPLES = 5000;
     sz = size(simulation_type);
-    for i=2:sz(2)
+    for i=2:size(sz,2)
        algorithm_name = simulation_type{i};
        %Run the algorithm specified against reasonable parameter ranges
        %Once there is convergence (change in displacement over iteration is within 5% for three runs in a row), 
@@ -59,7 +59,9 @@ if strcmp(simulation_type{1},'param-vary') == 1
           
            i = 1;
            %Modify this to alter randge of parameters to sweep
-           param_sweep = 0.05:0.05:0.25;
+           param_sweep = 0.05:0.05:0.9;
+           
+           
            cost_vec = zeros(numel(param_sweep),num_trials);
            disp_vec = zeros(numel(param_sweep),num_trials);
            kEnergy_vec = zeros(numel(param_sweep),num_trials);
@@ -208,21 +210,21 @@ if (strcmp(simulation_type{1},'metric-all') == 1)
         %Run lloyd style algorithm (use degenerate
         %non_adaptive_ladybug_coverage
         
-        %agent_loc(cur_trial,1,:,:,:) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lloyd,0,startingLoc);
+        agent_loc(cur_trial,1,:,:,:) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lloyd,0,startingLoc);
       
         %Run approximation via search based grid algorithm
-        %agent_loc(cur_trial,2,:,:,:) = approximation_discrete_nonconvex_coverage(num_iterations,show_plot,num_agents,obstacles,seed,startingLoc);
+        agent_loc(cur_trial,2,:,:,:) = approximation_discrete_nonconvex_coverage(num_iterations,show_plot,num_agents,obstacles,seed,startingLoc);
 
         %Run combined tangentbug and lloyd
         max_step = 0.25;
         B = combined(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_combined,loop_gain,max_step,startingLoc);
         agent_loc(cur_trial,3,:,:,:) = B;
         %Run optimal annealing, algorithm
-        % A = optimal_coverage_grid(num_iterations,show_plot,num_agents,obstacles,seed,startingLoc);
-        %agent_loc(cur_trial,4,:,:,:)= A;
+        A = optimal_coverage_grid(num_iterations,show_plot,num_agents,obstacles,seed,startingLoc);
+        agent_loc(cur_trial,4,:,:,:)= A;
         %Run non adaptive ladybug algorithm
 
-        %agent_loc(cur_trial,5,:,:,:) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lb, exploration_gain,startingLoc);
+        agent_loc(cur_trial,5,:,:,:) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lb, exploration_gain,startingLoc);
 
     end
         %Plot metric results
