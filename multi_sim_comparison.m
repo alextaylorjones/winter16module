@@ -211,7 +211,7 @@ if (strcmp(simulation_type{1},'metric-all') == 1)
         agent_loc(cur_trial,1,:,:,:) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lloyd,0,startingLoc);
       
         %Run approximation via search based grid algorithm
-        agent_loc(cur_trial,2,:,:,:) = approximation_discrete_nonconvex_coverage(num_iterations,show_plot,num_agents,obstacles,seed,startingLoc);
+      %  agent_loc(cur_trial,2,:,:,:) = approximation_discrete_nonconvex_coverage(num_iterations,show_plot,num_agents,obstacles,seed,startingLoc);
 
         %Run combined tangentbug and lloyd
         max_step = 0.25;
@@ -557,12 +557,14 @@ function kEnergy_vec = get_kEnergy_timeline_avoid_obstacles(agent_locations, tim
     kEnergy_vec = zeros(size(agent_locations,3),size(agent_locations,1));% num iterations x num_trials
 
     for trial=1:size(agent_locations,1)
-      for counter =2:size(agent_locations,3)%num iterations
-          kEnergy_vec(counter,trial) = kEnergy_vec(counter-1,trial);
+      for counter =1:size(agent_locations,3)%num iterations
+          if counter > 1
+            kEnergy_vec(counter,trial) = kEnergy_vec(counter-1,trial);
+          end
           for agent_num=1:size(agent_locations,4) %num agents
               diff = wall_hugging_path_length (agent_locations(trial,1,counter,agent_num,1),(agent_locations(trial,1,counter,agent_num,2)), (agent_locations(trial,1,counter-1,agent_num,1)),(agent_locations(trial,1,counter-1,agent_num,2)));
               
-              kEnergy_vec(counter,trial) = kEnergy_vec(counter,trial) + (diff/(time_vec(counter,trial) - time_vec(counter-1,trial)))^2;
+              kEnergy_vec(counter,trial) = kEnergy_vec(counter,trial) + (diff/(time_vec(counter+1,trial) - time_vec(counter,trial)))^2;
           end
       end
   end
@@ -576,13 +578,16 @@ function kEnergy_vec = get_kEnergy_timeline(agent_locations, time_vec)
     kEnergy_vec = zeros(size(agent_locations,3),size(agent_locations,1));% num iterations x num_trials
 
     for trial=1:size(agent_locations,1)
-      for counter =2:size(agent_locations,3)%num iterations
+      for counter =1:size(agent_locations,3)%num iterations
+        if counter > 1
+        
           kEnergy_vec(counter,trial) = kEnergy_vec(counter-1,trial);
+        end
           for agent_num=1:size(agent_locations,4) %num agents
               %Add euc distance moved ^2
               diff = agent_locations(trial,1,counter,agent_num,1:2) - agent_locations(trial,1,counter-1,agent_num,1:2);
               diff = sqrt(diff(1)^2 + diff(2)^2);
-              kEnergy_vec(counter,trial) = kEnergy_vec(counter,trial) +  (diff/(time_vec(counter,trial) - time_vec(counter-1,trial)))^2;
+              kEnergy_vec(counter,trial) = kEnergy_vec(counter,trial) +  (diff/(time_vec(counter+1,trial) - time_vec(counter,trial)))^2;
           end
       end
   end

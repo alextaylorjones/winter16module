@@ -25,8 +25,8 @@ function r = density(x,y)
             a = density_params(i,3);
             b = density_params(i,4);
             k = density_params(i,5);
-            r = density_params(i,6);
-            r = r + exp(-k*(a*(x-xc)^2+b*(y-yc)^2-r^2)^2);
+            rad = density_params(i,6);
+            r = r + exp(-k*(a*(x-xc)^2+b*(y-yc)^2-rad^2)^2);
             
         end
     end
