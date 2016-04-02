@@ -215,8 +215,8 @@ if (strcmp(simulation_type{1},'metric-all') == 1)
 
         %Run combined tangentbug and lloyd
         max_step = 0.25;
-        %B = combined(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_combined,loop_gain,max_step,startingLoc);
-        %agent_loc(cur_trial,3,:,:,:) = B;
+        B = combined(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_combined,loop_gain,max_step,startingLoc);
+        agent_loc(cur_trial,3,:,:,:) = B;
         %Run optimal annealing, algorithm
         A = optimal_coverage_grid(num_iterations,show_plot,num_agents,obstacles,seed,startingLoc);
         agent_loc(cur_trial,4,:,:,:)= A;
@@ -357,7 +357,7 @@ function get_obstacle_set()
     obstacles(size(obstacles,1)+1,:,:) = [0,0;20,0;20,10;3,10;3,6;7,6;7,4;3,4;0,0];
     end
     if mod(ob_config,5) == 0
-        obstacles(size(obstacles,1)+1,:,:) = [5,25;25,5;15,10;5,25;5,25;5,25;5,25;5,25;5,25];
+        obstacles(size(obstacles,1)+1,:,:) = [3,25;25,3;15,10;5,25;5,25;5,25;5,25;5,25;5,25];
     end
     if mod(ob_config,7) == 0
         obstacles(size(obstacles,1)+1,:,:) = [15,5;20,10;20,20;15,25;10,25;5,20;5,15;10,10;15,15;15,20;10,20;10,17;13,14;10,12;7,15;10,23;15,23;18,18;18,10;15,5 ];

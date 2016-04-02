@@ -252,6 +252,7 @@ function setup_path_mat()
   PATH_MAT = zeros(xrange,yrange,8);
 
   for i = 1:xrange
+      i
     for j=1:yrange
       %check for feasible paths in each direction
       % check all directions for intersection of short path from i,j to nearest neighbor
