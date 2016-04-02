@@ -21,7 +21,7 @@
 function agent_loc = multi_sim_comparison(obstacle_configuration, simulation_type, density_function_type,density_function_params, num_agents, num_iterations, startingLoc)
 
 %Num samples runs of each algorithm
-num_trials = 3;
+num_trials = 1;
 
 %random seed
 seed = 19;
@@ -72,8 +72,6 @@ if strcmp(simulation_type{1},'param-vary') == 1
                 cost_vec(i,trial) = cost_vec(i) + get_final_cost(agent_loc(trial,i,1:num_iterations,1:num_agents,1:2), obstacles,NUM_SAMPLES);
                 kEnergy_vec(i,trial) = kEnergy_vec(i) + get_final_kEnergy(agent_loc(trial,i,1:num_iterations,1:num_agents,1:2));
                 disp_vec(i,trial) = disp_vec(i) + get_final_displacement(agent_loc(trial,i,1:num_iterations,1:num_agents,1:2));
-
-
                 
               end
               i = i + 1;
@@ -82,13 +80,13 @@ if strcmp(simulation_type{1},'param-vary') == 1
           %close all;
           figure;
           plot(param_sweep,sum(cost_vec,2));
-          title('Combined Algorithm Final Cost vs Control Gain');
+          title('Lloyd Algorithm Final Cost vs Control Gain');
           figure;
           plot(param_sweep,sum(disp_vec,2));
-          title('Combined Algorithm Total Displacement vs Control Gain');
+          title('Lloyd Algorithm Total Displacement vs Control Gain');
           figure;
           plot(param_sweep,sum(kEnergy_vec,2));
-          title('Combined Algorithm Total kEnergy vs Control Gain');
+          title('Lloyd Algorithm Total kEnergy vs Control Gain');
                
        elseif strcmp(algorithm_name,'ladybug')== 1
            %Modify these to alter range of parameters to sweep
@@ -157,7 +155,7 @@ if strcmp(simulation_type{1},'param-vary') == 1
          max_step = 0;
          
          %Modify this to change parameter range
-           param_sweep = 0.05:0.05:0.9;
+           param_sweep = 0.85;
            
            cost_vec = zeros(numel(param_sweep),1);
            disp_vec = zeros(numel(param_sweep),1);
@@ -229,21 +227,38 @@ if (strcmp(simulation_type{1},'metric-all') == 1)
     end
         %Plot metric results
     close all;
-    v = 1:num_iterations;
 
     NUM_SAMPLES = 5000;
-    cost_lloyd  = get_cost_timeline(agent_loc(:,1,:,:,:),obstacles,NUM_SAMPLES);
-    cost_approx  = get_cost_timeline(agent_loc(:,2,:,:,:),obstacles,NUM_SAMPLES);
-    cost_combined = get_cost_timeline(agent_loc(:,3,:,:,:),obstacles,NUM_SAMPLES);
-    cost_optimal  = get_cost_timeline(agent_loc(:,4,:,:,:),obstacles,NUM_SAMPLES);
-    cost_ladybug  = get_cost_timeline(agent_loc(:,5,:,:,:),obstacles,NUM_SAMPLES);
+    [time_lloyd, cost_lloyd ] = get_cost_timeline_scaled(agent_loc(:,1,:,:,:),obstacles,NUM_SAMPLES);
+    [time_approx, cost_approx ] = get_cost_timeline_scaled(agent_loc(:,2,:,:,:),obstacles,NUM_SAMPLES);
+    [time_combined,cost_combined] = get_cost_timeline_scaled(agent_loc(:,3,:,:,:),obstacles,NUM_SAMPLES);
+    [time_optimal, cost_optimal ] = get_cost_timeline_scaled(agent_loc(:,4,:,:,:),obstacles,NUM_SAMPLES);
+    [time_ladybug, cost_ladybug ] = get_cost_timeline_scaled(agent_loc(:,5,:,:,:),obstacles,NUM_SAMPLES);
 
     figure(1);
-    plot(v,cost_lloyd,'o',v,cost_approx,'+',v, cost_combined,'x',v,cost_optimal,'^',v,cost_ladybug,'s');
-    legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
+    col(1,1:3) = [1,0,0];
+    col(2,1:3) = [1,1,0];
+    col(3,1:3) = [1,1,1];
+    col(4,1:3) = [0,1,0];
+    col(5,1:3) = [0,1,1];
+    
+%     for i =1:num_algs
+%         col(i,1:3) = (num_algs- i)/num_algs * ones(3,1);
+%     end
+    hold on;
+    for trial = 1:num_trials
+             h((trial-1)*num_algs + 1) =  plot(time_lloyd(:,trial),cost_lloyd(:,trial), 'DisplayName',sprintf('lloyd-trial(%d)',trial),'Color',col(1,:));
+             h((trial-1)*num_algs + 2) =  plot(time_approx(:,trial),cost_approx(:,trial), 'DisplayName',sprintf('approx-trial(%d)',trial),'Color',col(2,:));
+
+             h((trial-1)*num_algs + 3) =  plot(time_combined(:,trial),cost_combined(:,trial), 'DisplayName',sprintf('combined-trial(%d)',trial),'Color',col(3,:));
+             h((trial-1)*num_algs + 4) =  plot(time_optimal(:,trial),cost_optimal(:,trial), 'DisplayName',sprintf('optimal-trial(%d)',trial),'Color',col(4,:));
+             h((trial-1)*num_algs + 5) =  plot(time_ladybug(:,trial),cost_ladybug(:,trial), 'DisplayName',sprintf('ladybug-trial(%d)',trial),'Color',col(5,:));
+    end
+    legend(h);
     title('Coverage Control Sampled (5000) Cost');
-    xlabel('Iterations');
+    xlabel('Scaled Time');
     ylabel('Cost');
+    hold off;
 
     disp_lloyd = get_displacement_vec(agent_loc(:,1,:,:,:));
     disp_approx = get_displacement_vec(agent_loc(:,2,:,:,:));
@@ -253,25 +268,44 @@ if (strcmp(simulation_type{1},'metric-all') == 1)
 
 
     figure(2);
-    plot(v,disp_lloyd,'o',v,disp_approx,'+',v, disp_combined,'x',v,disp_optimal,'^',v,disp_ladybug,'s');
-    legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
+    hold on;
+    for trial = 1:num_trials
+             h((trial-1)*num_algs + 1) =  plot(time_lloyd(:,trial),disp_lloyd(:,trial), 'DisplayName',sprintf('lloyd-trial(%d)',trial),'Color',col(1,:));
+             h((trial-1)*num_algs + 2) =  plot(time_approx(:,trial),disp_approx(:,trial), 'DisplayName',sprintf('approx-trial(%d)',trial),'Color',col(2,:));
+
+             h((trial-1)*num_algs + 3) =  plot(time_combined(:,trial),disp_combined(:,trial), 'DisplayName',sprintf('combined-trial(%d)',trial),'Color',col(3,:));
+             h((trial-1)*num_algs + 4) =  plot(time_optimal(:,trial),disp_optimal(:,trial), 'DisplayName',sprintf('optimal-trial(%d)',trial),'Color',col(4,:));
+             h((trial-1)*num_algs + 5) =  plot(time_ladybug(:,trial),disp_ladybug(:,trial), 'DisplayName',sprintf('ladybug-trial(%d)',trial),'Color',col(5,:));
+    end
+    legend(h);
     title('Coverage Control Displacement');
     xlabel('Iterations');
     ylabel('Total Displacement');
-
-    kEnergy_lloyd  = get_kEnergy_timeline(agent_loc(:,1,:,:,:));
-    kEnergy_approx  = get_kEnergy_timeline(agent_loc(:,2,:,:,:));
-    kEnergy_combined = get_kEnergy_timeline_avoid_obstacles(agent_loc(:,3,:,:,:));
-    kEnergy_optimal  = get_kEnergy_timeline(agent_loc(:,4,:,:,:));
-    kEnergy_ladybug  = get_kEnergy_timeline(agent_loc(:,5,:,:,:));
+    hold off;
+    
+    kEnergy_lloyd  = get_kEnergy_timeline(agent_loc(:,1,:,:,:), time_lloyd);
+    kEnergy_approx  = get_kEnergy_timeline(agent_loc(:,2,:,:,:), time_approx);
+    kEnergy_combined = get_kEnergy_timeline_avoid_obstacles(agent_loc(:,3,:,:,:),time_combined);
+    kEnergy_optimal  = get_kEnergy_timeline(agent_loc(:,4,:,:,:),time_optimal);
+    kEnergy_ladybug  = get_kEnergy_timeline(agent_loc(:,5,:,:,:),time_ladybug);
 
 
     figure(3);
-    plot(v,kEnergy_lloyd,'o',v,kEnergy_approx,'+',v, kEnergy_combined,'x',v,kEnergy_optimal,'^',v,kEnergy_ladybug,'s');
-    legend('Lloyd','Discrete Apx.','Local Path','Annealing','Ladybug')
-    title('Coverage Control Sampled (1000) Kinetic Energy');
-    xlabel('Iterations');
-    ylabel('Kinetic Energy');
+    hold on;
+    for trial = 1:num_trials
+             h((trial-1)*num_algs + 1) =  plot(time_lloyd(:,trial),kEnergy_lloyd(:,trial), 'DisplayName',sprintf('lloyd-trial(%d)',trial),'Color',col(1,:));
+             h((trial-1)*num_algs + 2) =  plot(time_approx(:,trial),kEnergy_approx(:,trial), 'DisplayName',sprintf('approx-trial(%d)',trial),'Color',col(2,:));
+             h((trial-1)*num_algs + 3) =  plot(time_combined(:,trial),kEnergy_combined(:,trial), 'DisplayName',sprintf('combined-trial(%d)',trial),'Color',col(3,:));
+             h((trial-1)*num_algs + 4) =  plot(time_optimal(:,trial),kEnergy_optimal(:,trial), 'DisplayName',sprintf('optimal-trial(%d)',trial),'Color',col(4,:));
+             h((trial-1)*num_algs + 5) =  plot(time_ladybug(:,trial),kEnergy_ladybug(:,trial), 'DisplayName',sprintf('ladybug-trial(%d)',trial),'Color',col(5,:));
+    end
+    legend(h);
+    title('Kinetic Energy');
+    xlabel('Scaled Time');
+    ylabel('Cost');
+    hold off;
+    
+
 
     
 end
@@ -389,7 +423,7 @@ function get_obstacle_set()
       
       
 
-      obstacles(size(obstacles,1)+1,:,:) = ([spiral;flip(spiral_ccw,1)]);
+      obstacles(size(obstacles,1)+1,:,:) = ([spiral;fliplr(spiral_ccw')']);
         
     end
 %     if mod(ob_config,17)==0 %Office Plan
@@ -433,13 +467,43 @@ function get_obstacle_set()
 %     end
 end
 
+function [time_scaled,cost_vec] = get_cost_timeline_scaled(agent_locations,obstacles,NUM_SAMPLES)
+    
+
+    for trial=1:size(agent_locations,1)
+        
+        cost_vec(:,trial) = get_cost_timeline(agent_locations,obstacles,NUM_SAMPLES);
+    end
+    cur = 1;
+    time_scaled = [];
+    for i=2:size(cost_vec,1)
+        for trial=1:size(agent_locations,1)
+            time_scaled(i-1,trial) = cur;
+
+            time_scaled(i,trial) = cur + max_distance_travelled(trial,i,agent_locations,obstacles);
+            cur = time_scaled(i);
+        end
+    end
+end
+
+function d_max = max_distance_travelled(trial,counter,agent_locations,obstacles)
+    d_max = -Inf;
+    for ag_num = 1:size(agent_locations,4) %num agents
+        d_cur = wall_hugging_path_length(agent_locations(trial,1,counter,ag_num,1),agent_locations(trial,1,counter,ag_num,2),...
+                                agent_locations(trial,1,counter-1,ag_num,1),agent_locations(trial,1,counter-1,ag_num,2));
+        if d_cur > d_max
+            d_max = d_cur;
+        end
+    end
+end
+
 %Use sampling to detesrmine global cost
 function cost_vec = get_cost_timeline(agent_locations,obstacles, NUM_SAMPLES)
 	xrange = 30;
 	yrange = 30;
     
     if min(agent_locations == 0) == 1
-        cost_vec = zeros(size(agent_locations,3));%num iterations
+        cost_vec = zeros(size(agent_locations,3),1);%num iterations
         return;
     end
         
@@ -488,7 +552,7 @@ end
 
 %Assuming that agents moved from location i to i+1 in shortest path,
 %avoiding obstacles as they went.
-function kEnergy_vec = get_kEnergy_timeline_avoid_obstacles(agent_locations)
+function kEnergy_vec = get_kEnergy_timeline_avoid_obstacles(agent_locations, time_vec)
     %start at second position and calc distance moved
     kEnergy_vec = zeros(size(agent_locations,3),size(agent_locations,1));% num iterations x num_trials
 
@@ -498,7 +562,7 @@ function kEnergy_vec = get_kEnergy_timeline_avoid_obstacles(agent_locations)
           for agent_num=1:size(agent_locations,4) %num agents
               diff = wall_hugging_path_length (agent_locations(trial,1,counter,agent_num,1),(agent_locations(trial,1,counter,agent_num,2)), (agent_locations(trial,1,counter-1,agent_num,1)),(agent_locations(trial,1,counter-1,agent_num,2)));
               
-              kEnergy_vec(counter,trial) = kEnergy_vec(counter,trial) + diff^2;
+              kEnergy_vec(counter,trial) = kEnergy_vec(counter,trial) + (diff/(time_vec(counter,trial) - time_vec(counter-1,trial)))^2;
           end
       end
   end
@@ -507,7 +571,7 @@ function kEnergy_vec = get_kEnergy_timeline_avoid_obstacles(agent_locations)
 end
 
 
-function kEnergy_vec = get_kEnergy_timeline(agent_locations)
+function kEnergy_vec = get_kEnergy_timeline(agent_locations, time_vec)
     %start at second position and calc distance moved
     kEnergy_vec = zeros(size(agent_locations,3),size(agent_locations,1));% num iterations x num_trials
 
@@ -517,7 +581,8 @@ function kEnergy_vec = get_kEnergy_timeline(agent_locations)
           for agent_num=1:size(agent_locations,4) %num agents
               %Add euc distance moved ^2
               diff = agent_locations(trial,1,counter,agent_num,1:2) - agent_locations(trial,1,counter-1,agent_num,1:2);
-              kEnergy_vec(counter,trial) = kEnergy_vec(counter,trial) + (diff(1)^2 + diff(2)^2);
+              diff = sqrt(diff(1)^2 + diff(2)^2);
+              kEnergy_vec(counter,trial) = kEnergy_vec(counter,trial) +  (diff/(time_vec(counter,trial) - time_vec(counter-1,trial)))^2;
           end
       end
   end
@@ -616,9 +681,9 @@ function t = wall_hugging_path_length(cx,cy,Px,Py)
         end
 
         if (start_vert >= end_vert)
-          vert_array = flip(end_vert:start_vert);
+          vert_array = fliplr(end_vert:start_vert);
         else
-          vert_array = flip([start_vert:size(obstacles,2),1:end_vert]);
+          vert_array = fliplr([start_vert:size(obstacles,2),1:end_vert]);
         end
 
         %calc distances along obstacle wall from start vert to end vert
