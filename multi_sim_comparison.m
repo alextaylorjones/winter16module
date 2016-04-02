@@ -661,11 +661,11 @@ function total = wall_hugging_path_length(cx,cy,Px,Py)
             end
 
             end_vert = int_points(4,2+j);
-
+            
             if (start_vert <= end_vert)
               vert_array = start_vert:end_vert;
             else
-              vert_array = [start_vert:size(obstacles,2),1:end_vert];
+              vert_array = [end_vert:size(obstacles,2),1:start_vert];
             end
 
             %calc distances along obstacle wall from start vert to end vert
@@ -695,7 +695,7 @@ function total = wall_hugging_path_length(cx,cy,Px,Py)
             if (start_vert >= end_vert)
               vert_array = fliplr(end_vert:start_vert);
             else
-              vert_array = fliplr([start_vert:size(obstacles,2),1:end_vert]);
+              vert_array = fliplr([end_vert:size(obstacles,2),1:start_vert]);
             end
 
             %calc distances along obstacle wall from start vert to end vert
