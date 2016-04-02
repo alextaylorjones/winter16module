@@ -18,7 +18,7 @@
 %   % fixed - start agents surrounding x y point
 %   % random - start agents randomly (does not use 2nd and 3rd elements of
 %   cell)
-function agent_loc = multi_sim_comparison(obstacle_configuration, simulation_type, density_function_type,density_function_params, num_agents, num_iterations, startingLoc)
+function agent_loc = multi_sim_comparison(obstacle_configuration, simulation_type, density_function_type,density_function_params, num_agents, num_iterations, startingLoc,agentLoc)
 
 %Num samples runs of each algorithm
 num_trials = 1;
@@ -218,8 +218,8 @@ if (strcmp(simulation_type{1},'metric-all') == 1)
         B = combined(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_combined,loop_gain,max_step,startingLoc);
         agent_loc(cur_trial,3,:,:,:) = B;
         %Run optimal annealing, algorithm
-        A = optimal_coverage_grid(num_iterations,show_plot,num_agents,obstacles,seed,startingLoc);
-        agent_loc(cur_trial,4,:,:,:)= A;
+        %A = optimal_coverage_grid(num_iterations,show_plot,num_agents,obstacles,seed,startingLoc);
+        %agent_loc(cur_trial,4,:,:,:)= A;
         %Run non adaptive ladybug algorithm
 
         agent_loc(cur_trial,5,:,:,:) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lb, exploration_gain,startingLoc);
@@ -238,7 +238,7 @@ if (strcmp(simulation_type{1},'metric-all') == 1)
     figure(1);
     col(1,1:3) = [1,0,0];
     col(2,1:3) = [1,1,0];
-    col(3,1:3) = [1,1,1];
+    col(3,1:3) = [0,0,1];
     col(4,1:3) = [0,1,0];
     col(5,1:3) = [0,1,1];
     
@@ -557,14 +557,14 @@ function kEnergy_vec = get_kEnergy_timeline_avoid_obstacles(agent_locations, tim
     kEnergy_vec = zeros(size(agent_locations,3),size(agent_locations,1));% num iterations x num_trials
 
     for trial=1:size(agent_locations,1)
-      for counter =1:size(agent_locations,3)%num iterations
+      for counter =2:size(agent_locations,3)%num iterations
           if counter > 1
             kEnergy_vec(counter,trial) = kEnergy_vec(counter-1,trial);
           end
           for agent_num=1:size(agent_locations,4) %num agents
               diff = wall_hugging_path_length (agent_locations(trial,1,counter,agent_num,1),(agent_locations(trial,1,counter,agent_num,2)), (agent_locations(trial,1,counter-1,agent_num,1)),(agent_locations(trial,1,counter-1,agent_num,2)));
               
-              kEnergy_vec(counter,trial) = kEnergy_vec(counter,trial) + (diff/(time_vec(counter+1,trial) - time_vec(counter,trial)))^2;
+              kEnergy_vec(counter,trial) = kEnergy_vec(counter,trial) + (diff/(time_vec(counter,trial) - time_vec(counter-1,trial)))^2;
           end
       end
   end
@@ -578,7 +578,7 @@ function kEnergy_vec = get_kEnergy_timeline(agent_locations, time_vec)
     kEnergy_vec = zeros(size(agent_locations,3),size(agent_locations,1));% num iterations x num_trials
 
     for trial=1:size(agent_locations,1)
-      for counter =1:size(agent_locations,3)%num iterations
+      for counter =2:size(agent_locations,3)%num iterations
         if counter > 1
         
           kEnergy_vec(counter,trial) = kEnergy_vec(counter-1,trial);
@@ -587,7 +587,7 @@ function kEnergy_vec = get_kEnergy_timeline(agent_locations, time_vec)
               %Add euc distance moved ^2
               diff = agent_locations(trial,1,counter,agent_num,1:2) - agent_locations(trial,1,counter-1,agent_num,1:2);
               diff = sqrt(diff(1)^2 + diff(2)^2);
-              kEnergy_vec(counter,trial) = kEnergy_vec(counter,trial) +  (diff/(time_vec(counter+1,trial) - time_vec(counter,trial)))^2;
+              kEnergy_vec(counter,trial) = kEnergy_vec(counter,trial) +  (diff/(time_vec(counter,trial) - time_vec(counter-1,trial)))^2;
           end
       end
   end

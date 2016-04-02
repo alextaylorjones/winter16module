@@ -84,7 +84,12 @@ for counter = 1:numIterations
             set(numHandle(i),'Position',[ Px(i),Py(i)]);
         end 
     end
-               
+             
+    %Store agent locations
+    agent_locations(counter,:,1) = Px;
+    agent_locations(counter,:,2) = Py;
+    
+          
    %Px,PY are grid location vectors
     for i = 1:n
         [v,c] = VoronoiBounded(Px, Py,crs);
@@ -213,12 +218,7 @@ for counter = 1:numIterations
         end
         
     end
-    
-    %Store agent locations
-    agent_locations(counter,:,1) = Px;
-    agent_locations(counter,:,2) = Py;
-    
-    
+
     if showPlot
         for i = 1:numel(c) % update Voronoi cells
             set(verCellHandle(i), 'XData',v(c{i},1),'YData',v(c{i},2));

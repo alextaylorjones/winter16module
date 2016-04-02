@@ -139,7 +139,11 @@ for counter = 1:numIteration
 
     %Get projection of geometric centroids into voronoi cells
     centroid_vec = project_centroid(centroid_vec,density_vec,voronoi_mat);
-
+    
+    %Store agent locations
+    agent_locations(counter,:,1) = Px;
+    agent_locations(counter,:,2) = Py;
+    
     %Move each agent to the neighboring cell along the shortest path to the
     %projected centroid (in centroid vec)
     
@@ -176,9 +180,7 @@ for counter = 1:numIteration
         Px(i) = prev(1); 
         Py(i) = prev(2);
     end
-    %Store agent locations
-    agent_locations(counter,:,1) = Px;
-    agent_locations(counter,:,2) = Py;
+
     
     if showPlot
         for i = 1:num_agents % update Voronoi cells

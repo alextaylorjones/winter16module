@@ -78,7 +78,10 @@ end
 for counter = 1:numIterations
 
     [v,c]=VoronoiBounded(Vx,Vy, crs);
-   
+       
+    %Save real locations
+    agent_locations(counter,:,1) = Px;
+    agent_locations(counter,:,2) = Py;
     for i = 1:numel(c) 
         
         %calculate the centroid of each cell
@@ -103,10 +106,7 @@ for counter = 1:numIterations
     
             [Px(i),Py(i)] = tangentBugApprox( Px(i), Py(i), cx, cy, obstacles, loop_gain, max_step);
    
-    
-    %Save real locations
-    agent_locations(counter,:,1) = Px;
-    agent_locations(counter,:,2) = Py;
+
     
     %DEBUG ensure all agents do not appear in obstacles
 %     for j =1:num_agents

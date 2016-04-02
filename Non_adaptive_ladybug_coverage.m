@@ -64,7 +64,11 @@ for counter = 1:numIterations
         end 
     end
     
-                
+           
+    %Store agent locations
+	agent_locations(counter,:,1) = Px;
+	agent_locations(counter,:,2) = Py;
+         
     for i = 1:numel(c)
         %calculate the centroid of each cell
         [cx,cy] = PolyCentroidNonuniformDensity(v(c{i},1),v(c{i},2), obstacles);
@@ -147,10 +151,6 @@ for counter = 1:numIterations
         
         end
     end
-    
-    %Store agent locations
-	agent_locations(counter,:,1) = Px;
-	agent_locations(counter,:,2) = Py;
 
     if showPlot
         for i = 1:numel(c) % update Voronoi cells
