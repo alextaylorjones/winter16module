@@ -616,7 +616,7 @@ function movement_vec = get_displacement_vec_avoid_obstacles(agent_locations)
 end
 
 
-function t = wall_hugging_path_length(cx,cy,Px,Py)
+function total = wall_hugging_path_length(cx,cy,Px,Py)
     global obstacles;
     int_points = [];
     for ob =1:size(obstacles,1)
@@ -641,78 +641,100 @@ function t = wall_hugging_path_length(cx,cy,Px,Py)
     %If more than one intersection point, then the straight line distance moves through an
     %obstacle, so calc the path around the boundary
 
-    assert(size(int_points,2) < 3); % if this fails, then path intersected with more than two edges of an obstacle
-    if (size(int_points,2) == 2)
-        %num of obstacle
-        ob = int_points(3,1);
-        assert(ob == int_points(3,2)); %assert that obstacle matches for start and end
 
-        %%%%%%%%%CCW
-        start_vert = int_points(4,1) + 1;
-        if (start_vert > size(obstacles,2) )
-          start_vert = 1;
-        end
-
-        end_vert = int_points(4,2);
-
-        if (start_vert <= end_vert)
-          vert_array = start_vert:end_vert;
-        else
-          vert_array = [start_vert:size(obstacles,2),1:end_vert];
-        end
-
-        %calc distances along obstacle wall from start vert to end vert
-        %add dist from intersection to next vertex
-        df_ccw = sqrt((obstacles(ob,start_vert,2) - int_points(2,1) ) ^ 2 + (obstacles(ob,start_vert,1) - int_points(1,1) ) ^ 2) + ...
-                 sqrt((obstacles(ob,end_vert,2) - int_points(2,2) ) ^ 2 + (obstacles(ob,end_vert,1) - int_points(1,2) ) ^ 2);
-        i = 1;
-        for v=vert_array
-          if i == 1
-            prev = v;
-            i = 2;
-            continue;
-          end
-          df_ccw = df_ccw + euc_dist(obstacles(ob,v,:),obstacles(ob,prev,:));
-          prev = v;
-        end
-       
-
- 
-        %%%%%%%%%CW
-        start_vert = int_points(4,1);
-        end_vert = int_points(4,2) + 1;
-        if (end_vert > size(obstacles,2))
-          end_vert = 1;
-        end
-
-        if (start_vert >= end_vert)
-          vert_array = fliplr(end_vert:start_vert);
-        else
-          vert_array = fliplr([start_vert:size(obstacles,2),1:end_vert]);
-        end
-
-        %calc distances along obstacle wall from start vert to end vert
-        %add dist from intersection to next vertex
-        df_cw = sqrt((obstacles(ob,start_vert,2) - int_points(2,1) ) ^ 2 + (obstacles(ob,start_vert,1) - int_points(1,1) ) ^ 2) + ...
-                 sqrt((obstacles(ob,end_vert,2) - int_points(2,2) ) ^ 2 + (obstacles(ob,end_vert,1) - int_points(1,2) ) ^ 2);
-        i = 1;
-        for v=vert_array
-          if i == 1
-            prev = v;
-            i = 2;
-            continue;
-          end
-          df_cw = df_cw + euc_dist(obstacles(ob,v,:),obstacles(ob,prev,:));
-          prev = v;
-        end
-
-        %Get min
-        t = min([df_cw,df_ccw]) + euc_dist([Px,Py]',int_points(1:2,1)) + euc_dist([cx,cy]',int_points(1:2,2));
-        return;
-    end
-        
+    total = 0;
+    if (size(int_points,2) < 2)         
           % if no occlusion found, return geodesic distance
-    t = sqrt((Px - cx)^2 + (Py-cy)^2);
+     total = sqrt((Px - cx)^2 + (Py-cy)^2);
+     return;
+    end
+    for j=0:2:(size(int_points,2))-1 %compute for each pair of intersections
+           
+            %num of obstacle
+            ob = int_points(3,1+j);
+            assert(ob == int_points(3,2+j)); %assert that obstacle matches for start and end
+
+            %%%%%%%%%CCW
+            start_vert = int_points(4,1+j) + 1;
+            if (start_vert > size(obstacles,2) )
+              start_vert = 1;
+            end
+
+            end_vert = int_points(4,2+j);
+
+            if (start_vert <= end_vert)
+              vert_array = start_vert:end_vert;
+            else
+              vert_array = [start_vert:size(obstacles,2),1:end_vert];
+            end
+
+            %calc distances along obstacle wall from start vert to end vert
+            %add dist from intersection to next vertex
+            df_ccw = sqrt((obstacles(ob,start_vert,2) - int_points(2,1+j) ) ^ 2 + (obstacles(ob,start_vert,1) - int_points(1,1+j) ) ^ 2) + ...
+                     sqrt((obstacles(ob,end_vert,2) - int_points(2,2+j) ) ^ 2 + (obstacles(ob,end_vert,1) - int_points(1,2+j) ) ^ 2);
+            i = 1;
+            for v=vert_array
+              if i == 1
+                prev = v;
+                i = 2;
+                continue;
+              end
+              df_ccw = df_ccw + euc_dist(obstacles(ob,v,:),obstacles(ob,prev,:));
+              prev = v;
+            end
+
+
+
+            %%%%%%%%%CW
+            start_vert = int_points(4,1+j);
+            end_vert = int_points(4,2+j) + 1;
+            if (end_vert > size(obstacles,2))
+              end_vert = 1;
+            end
+
+            if (start_vert >= end_vert)
+              vert_array = fliplr(end_vert:start_vert);
+            else
+              vert_array = fliplr([start_vert:size(obstacles,2),1:end_vert]);
+            end
+
+            %calc distances along obstacle wall from start vert to end vert
+            %add dist from intersection to next vertex
+            df_cw = sqrt((obstacles(ob,start_vert,2) - int_points(2,1+j) ) ^ 2 + (obstacles(ob,start_vert,1) - int_points(1,1+j) ) ^ 2) + ...
+                     sqrt((obstacles(ob,end_vert,2) - int_points(2,2+j) ) ^ 2 + (obstacles(ob,end_vert,1) - int_points(1,2+j) ) ^ 2);
+            i = 1;
+            for v=vert_array
+              if i == 1
+                prev = v;
+                i = 2;
+                continue;
+              end
+              df_cw = df_cw + euc_dist(obstacles(ob,v,:),obstacles(ob,prev,:));
+              prev = v;
+            end
+    
+        %Get min
+        if j ==0
+            startx = Px;
+            starty = Py;
+            endx = int_points(1,2);
+            endy = int_points(2,2);
+        else
+            startx = int_points(1,j); %from last intersection from previous obstacle
+            starty = int_points(2,j); %from last intersection of prev obstacle
+            endx = int_points(1,2+j);
+            endy = int_points(2,2+j);   
+        end
+            if (j == max(0:2:(size(int_points,2)/2))) %if this is the final obstacle, then use the target as the final point
+                total = total + min([df_cw,df_ccw]) + euc_dist([startx,starty]',int_points(1:2,1+j)) + euc_dist([cx,cy]',int_points(1:2,2+j));
+                return;
+            else
+                total = total + min([df_cw,df_ccw]) + euc_dist([startx,starty]',int_points(1:2,1+j)) + euc_dist([endx,endy]',int_points(1:2,2+j));
+            end
+        end
+        
+    
+      
 end
 
 function d = euc_dist(p1,p2)
