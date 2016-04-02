@@ -59,7 +59,9 @@ function triangles = polygon_triangulate ( n, x, y )
       fprintf ( 1, '\n' );
       fprintf ( 1, 'POLYGON_TRIANGULATE - Fatal error!\n' );
       fprintf ( 1, '  Two consecutive nodes are identical.\n' );
-      error ( 'POLYGON_TRIANGULATE - Fatal error!' );
+      triangles = [];
+      return;
+      %error ( 'POLYGON_TRIANGULATE - Fatal error!' );
     end
     node_m1 = node;
   end

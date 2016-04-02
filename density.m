@@ -20,12 +20,12 @@ function r = density(x,y)
         %entry 6 = r (radius)
         r =0;
         for i=1:size(density_params,1)
-            xc = (density(i,1));
-            yc =density(i,2);
-            a = density(i,3);
-            b = density(i,4);
-            k = density(i,5);
-            r = density(i,6);
+            xc = (density_params(i,1));
+            yc =density_params(i,2);
+            a = density_params(i,3);
+            b = density_params(i,4);
+            k = density_params(i,5);
+            r = density_params(i,6);
             r = r + exp(-k*(a*(x-xc)^2+b*(y-yc)^2-r^2)^2);
             
         end

@@ -40,8 +40,8 @@ Py = zeros(n,1);
 
 %Place robots randomly on grid
 [Px,Py] = starting_point_discrete(obstacles,startingLoc,num_agents,grid);
-Px = Px';
-Py = Py';
+%Px = Px';
+%Py = Py';
 
 for i=1:numel(Px)
   grid(Px(i),Py(i))=i;
@@ -249,8 +249,18 @@ a = m*(grid_area/100)*max_cost/log(counter+1);
 
 function cost = calculateContinousCoverageCost(Px,Py,v,c)
 cost = 0;
+cost_i = -1;
 for i = 1:numel(c)
+    prev = cost_i;
     cost_i = CellCost(Px(i),Py(i),v(c{i},1),v(c{i},2));
+    if cost_i == -1
+        if i > 1
+            cost_i = prev;
+        else
+            error('Error in fixing cost to another agent (as an approx)');
+        end
+        
+    end
      cost = cost + cost_i;
 end
     
@@ -287,7 +297,10 @@ function [cost] = CellCost(px,py,X,Y)
     
     %Triangulate using script of same name
     triangles = polygon_triangulate(n, x_r(1:n), y_r(1:n));
-    
+    if isempty(triangles)
+        cost = -1;
+        return;
+    end
     %Array of areas of each triangle in the polygon
     tri_areas(1:n-2,1) = 0;
     
