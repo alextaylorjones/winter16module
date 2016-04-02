@@ -217,8 +217,8 @@ if (strcmp(simulation_type{1},'metric-all') == 1)
 
         %Run combined tangentbug and lloyd
         max_step = 0.25;
-        B = combined(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_combined,loop_gain,max_step,startingLoc);
-        agent_loc(cur_trial,3,:,:,:) = B;
+        %B = combined(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_combined,loop_gain,max_step,startingLoc);
+        %agent_loc(cur_trial,3,:,:,:) = B;
         %Run optimal annealing, algorithm
         A = optimal_coverage_grid(num_iterations,show_plot,num_agents,obstacles,seed,startingLoc);
         agent_loc(cur_trial,4,:,:,:)= A;
@@ -560,8 +560,9 @@ function t = wall_hugging_path_length(cx,cy,Px,Py)
             %Find the intersection point along trajectory of
             %agent i to its destination
             [int_x int_y] = polyxpoly([Px cx],[Py cy],[vstart(1) vend(1)],[vstart(2) vend(2)]);
-            if (~isempty(int_x) || ~isempty(int_y) ) 
-                int_points(1:4,size(int_points,2)+1) = [int_x,int_y,ob,vert];
+            if (~isempty(int_x) || ~isempty(int_y) )
+                
+                int_points(1:4,size(int_points,2)+1) = [int_x(1),int_y(1),ob,vert];
                  
             end
 
