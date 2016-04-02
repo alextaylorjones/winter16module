@@ -211,7 +211,7 @@ if (strcmp(simulation_type{1},'metric-all') == 1)
         agent_loc(cur_trial,1,:,:,:) = Non_adaptive_ladybug_coverage(num_iterations,show_plot,num_agents,obstacles,seed,control_gain_lloyd,0,startingLoc);
       
         %Run approximation via search based grid algorithm
-      %  agent_loc(cur_trial,2,:,:,:) = approximation_discrete_nonconvex_coverage(num_iterations,show_plot,num_agents,obstacles,seed,startingLoc);
+       agent_loc(cur_trial,2,:,:,:) = approximation_discrete_nonconvex_coverage(num_iterations,show_plot,num_agents,obstacles,seed,startingLoc);
 
         %Run combined tangentbug and lloyd
         max_step = 0.25;
